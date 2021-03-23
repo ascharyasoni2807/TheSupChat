@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/OTPScreen.dart';
-import 'package:thegorgeousotp/ProfileScreen.dart';
 import 'package:thegorgeousotp/pages/contatcs1.dart';
 import 'package:thegorgeousotp/pages/profilepage.dart';
 import 'package:thegorgeousotp/stores/login_store.dart';
