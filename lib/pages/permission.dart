@@ -3,7 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:thegorgeousotp/pages/contacts.dart';
+import 'package:thegorgeousotp/pages/contatcs1.dart';
 
 class ContactPermission {
 

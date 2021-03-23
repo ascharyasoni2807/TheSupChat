@@ -14,14 +14,17 @@ dependencies:
   cupertino_icons: ^1.0.2
   firebase_auth: ^1.0.1
   firebase_core: ^1.0.1
+  # flutter_contact: ^0.8.1+2
   flutter_mobx: ^1.1.0
   google_fonts: ^2.0.0
   image_cropper: ^1.4.0
   image_picker: ^0.7.2+1
   mobx: ^1.1.1
   numeric_keyboard: ^1.0.0
+  path_provider: ^2.0.1
   permission_handler: ^6.1.0
   provider: ^5.0.0
+  shared_preferences: ^2.0.5
 
 dev_dependencies:
   flutter_test:

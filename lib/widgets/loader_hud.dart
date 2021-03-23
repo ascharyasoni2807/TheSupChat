@@ -12,7 +12,7 @@ class LoaderHUD extends StatelessWidget {
       borderRadius: const BorderRadius.all(Radius.circular(8)),
       color: MyColors.maincolor.withOpacity(0.7),
     ),
-    child: const Center(child: CircularProgressIndicator()),
+    child: const Center(child: CircularProgressIndicator(backgroundColor: Colors.white,)),
   );
   final bool dismissible;
   final Widget child;

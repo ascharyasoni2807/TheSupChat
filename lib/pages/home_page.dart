@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/pages/contacts.dart';
+import 'package:thegorgeousotp/pages/contatcs1.dart';
 import 'package:thegorgeousotp/pages/profilepage.dart';
 import 'package:thegorgeousotp/stores/login_store.dart';
 import 'package:thegorgeousotp/theme.dart';
@@ -20,8 +21,26 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
 
 Stream chatroomstream;
-
+ final FirebaseAuth _auth = FirebaseAuth.instance;
 LoginStore loginStore = LoginStore();
+List users = [];
+ FirebaseFirestore firestoreInstance=  FirebaseFirestore.instance;
+listalluser () async {
+ 
+ firestoreInstance.collection("users").get().then((QuerySnapshot querySnapshot) {
+    querySnapshot.docs.forEach((result) {
+      // print(result.data());
+       final Map value = result.data();
+    users = value.values.toList();
+    print(users[1]["phone"]);
+    });
+  });
+
+ 
+}
+
+
+
   @override
   void initState() {
     // TODO: implement initState
@@ -48,12 +67,12 @@ LoginStore loginStore = LoginStore();
                           return Chatroomtile(
                             
                               userName: snapshot.data.docs[index]
-                                  .data()["chatroomId"]
+                                  .data()["uid"]
                                   .toString()
                                   .replaceAll("_", ""),
                                   // .replaceAll(Constants.myName, ''),
                               chatRoomId:
-                                  snapshot.data.docs[index].data()["chatroomId"],
+                                  snapshot.data.docs[index].data()["email"],
                               image:  snapshot.data.docs[index].data()["image"]
                             );
                         }),
@@ -61,7 +80,16 @@ LoginStore loginStore = LoginStore();
                 ),
               )
                   
-              : CircularProgressIndicator();
+              // ignore: prefer_const_constructors
+              : Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical:5),
+                    height: 30,
+                    width: 20,
+                    child: CircularProgressIndicator( backgroundColor: Colors.white,valueColor:AlwaysStoppedAnimation<Color>(MyColors.maincolor))),
+                ],
+              );
 
               
         });
@@ -94,9 +122,10 @@ getUserInfo() async {
     print('heeloji');
     
    var value = await FirebaseFirestore.instance
-        .collection("ChatRoom")
-        .where("users", arrayContains: 'commando')
+        .collection("users")
+        // .where("users", arrayContains: 'commando')
         .snapshots();
+    
       setState(() {
         chatroomstream = value;}
       );
@@ -112,7 +141,7 @@ getUserInfo() async {
           
           backgroundColor: Colors.white,
           appBar: AppBar(
-           title: Text("UpChat", style: TextStyle(color: Colors.white),),
+           title: Text("Chats", style: TextStyle(color: Colors.white),),
            backgroundColor: MyColors.buttoncolor,
            actions: [
               Container(
@@ -131,7 +160,7 @@ getUserInfo() async {
                 icon: Icon(Icons.face_retouching_natural),
                 onPressed: () {
                 // loginStore.signOut(context);
-                Navigator.push(context, MaterialPageRoute(builder:(context) => ProfilePage()));
+                Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) => ProfilePage()));
                 print("profile");
                 }))
               ]
@@ -142,6 +171,8 @@ getUserInfo() async {
                                ])     ),
                                floatingActionButton: FloatingActionButton(
                                  onPressed: ()async {
+
+                                  //  listalluser();
                                 ContactPermission().permissioncheck(context);
                                    print("hello supchat");
                                  },backgroundColor: MyColors.maincolor,

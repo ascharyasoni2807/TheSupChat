@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
+import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
 import 'package:thegorgeousotp/pages/home_page.dart';
 import 'package:thegorgeousotp/pages/login_page.dart';
 import 'package:thegorgeousotp/pages/otp_page.dart';
@@ -31,6 +32,7 @@ abstract class LoginStoreBase with Store {
   @action
   Future<bool> isAlreadyAuthenticated() async {
     firebaseUser = await _auth.currentUser;
+
     if (firebaseUser != null) {
       return true ;
     } else {
@@ -38,6 +40,7 @@ abstract class LoginStoreBase with Store {
     }
   }
 Candidate _userFromFirebaseUser(User user) {
+  print(user.phoneNumber);
     return user != null
         ? Candidate(
             uid: user.uid,
@@ -123,8 +126,14 @@ Candidate _userFromFirebaseUser(User user) {
     isOtpLoading = true;
 
     firebaseUser = result.user;
-        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' + result.user.uid);
+        Map<String, String> userInfoMap = {
+        "uid": result.user.uid,
+        "phone": result.user.phoneNumber
+      };
+    DatabaseMethods().uploadUserInfo( result.user.phoneNumber , userInfoMap);
+
          _userFromFirebaseUser(result.user);
+          print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' + result.user.uid);
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) =>  HomePage()), (Route<dynamic> route) => false);
 
     isLoginLoading = false;

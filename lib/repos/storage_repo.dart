@@ -5,7 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:thegorgeousotp/repos/candidate.dart';
-
+import 'package:path_provider/path_provider.dart';
 
 class StorageRepo{
  File profileImage;
@@ -15,9 +15,13 @@ class StorageRepo{
  
  Future uploadPic(File file ) async {
  String a;
-  a = basename(file.path);
+ profileImage = file;
+ print(file);
+
+  a = '+18888888888.jpg';
   print(a);
-  
+ 
+
   if (file!=null){
     firebase_storage.Reference reference =
         firebase_storage.FirebaseStorage.instance.ref().child('$a');
@@ -26,6 +30,7 @@ class StorageRepo{
     print(uploadTask.snapshot);    }
     print(Candidate().uid );
     print('completed');
+    
  }
 
 

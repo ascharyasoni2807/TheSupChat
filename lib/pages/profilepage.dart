@@ -1,13 +1,14 @@
 import 'dart:io';
-
+import 'package:path/path.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:thegorgeousotp/repos/candidate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:thegorgeousotp/pages/home_page.dart';
 import 'package:thegorgeousotp/repos/storage_repo.dart';
 import 'package:thegorgeousotp/theme.dart';
+import 'package:path_provider/path_provider.dart';
 
 
 class ProfilePage extends StatefulWidget {
@@ -17,31 +18,64 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
    File _image;
-  final picker = ImagePicker();
-  //  List<firebase_storage.UploadTask> _uploadTasks = [];
+   File localImage;
+   File _profileimage;
+   var profilepath;
+  var picker = ImagePicker();
+ Directory appDocDir;
+
+@override
+void initState() { 
+  super.initState();
+  setState(() {
+    
+  });
+ print(profilepath);
+}
+ 
+documentdirectory(_image ,pathImage ,pickedFile)async {
+ print('houiiiugugiygu');
+ appDocDir =  await getApplicationDocumentsDirectory();
+ String appDocPath = appDocDir.path;
+final File localImage = await pickedFile.copy('$appDocPath/$pathImage');
+
+
+SharedPreferences prefs = await SharedPreferences.getInstance();
+prefs.setString('profile_image', localImage.path);
+
+setState(() {
+  profilepath = prefs.getString('profile_image'); 
+});
+
+setState(() {
+   _image = FileImage(File(prefs.getString('profile_image')));
+});
+print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'+ profilepath);
+}
+
+  //  getting selecting profile picture for user
   Future getImage() async {
     var pickedFile = await picker.getImage(source: ImageSource.gallery );
-
-    setState(()  {
       if (pickedFile != null)  {
         _image = File(pickedFile.path);
+        CircularProgressIndicator();
+         var pathimage= basename(_image.path);
          _cropImage(pickedFile.path);
-       
-       
+         documentdirectory(_image ,pathimage,pickedFile);
+         CircularProgressIndicator();
       } else {
         print('No image selected.');
       }
-    });
+    
   }
+  //  croppinng and uploading profile picture
   _cropImage(filePath) async {
     File croppedImage = await ImageCropper.cropImage(
         sourcePath: filePath,
-        // maxWidth: 1080,
-        // maxHeight: 1080,
     );
-     if (croppedImage != null) {
+     if (croppedImage != null)  {
         _image = croppedImage;
-         StorageRepo().uploadPic(_image);
+       await StorageRepo().uploadPic(_image) ;
           print('completed' );
       setState(() {
         
@@ -56,6 +90,10 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         backgroundColor: MyColors.maincolor ,
         title: Text('Profile Info'),
+         leading: new IconButton(
+          icon: new Icon(Icons.arrow_back),
+          onPressed: () =>   Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) => HomePage()))
+        )
       ),
       body:Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -70,24 +108,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     alignment: Alignment.center,
                     child: GestureDetector(
                       onTap: getImage,
-                                          child: CircleAvatar(
-                        radius: 100,
-                        
+                      child: CircleAvatar(
+                        radius: 70,
                         backgroundColor: Colors.black,
                         child: ClipOval(
-                          
                           child: AspectRatio(
                             aspectRatio: 1,
-                            child: new SizedBox(
-                              
+                            child: SizedBox(
                               width:double.infinity,
                               height: double.infinity,
-                              child: (_image!=null)?Image.file(
-                                 
+                              child: (_image!=null )?Image.file(
                                 _image,
                                 fit: BoxFit.fill,
-                              ):Image.network(
-                                "https://firebasestorage.googleapis.com/v0/b/hellochat-e7e2e.appspot.com/o/image_cropper_1615918134209.jpg?alt=media&token=23924540-0773-40b1-be38-7ced1ddec1c4",
+                              ) :     Image.network(
+                                "https://firebasestorage.googleapis.com/v0/b/hellochat-e7e2e.appspot.com/o/%2B18888888888.jpg?alt=media&token=49e33390-6c0f-48c8-b558-fa9abc0b7d70",
                                 fit: BoxFit.fill,
                               ),
                             ),
@@ -100,17 +134,32 @@ class _ProfilePageState extends State<ProfilePage> {
                 SizedBox(height: 50),
                   Container(
                     width: 300,
-                    height: 50,
+                    height: 60,
                     child: Card(
                       color: MyColors.maincolor,
-                      child: Center(child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal:8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text('Name :' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),),
-                          ],
-                        ),
+                      child: Center(child: Column(
+                        children: [
+                          Padding(
+                           padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text('Name :' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),),
+                                SizedBox(width:10),
+                                 Text('Ascharya Soni' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),)
+                              ],
+                            ),
+                          
+                          ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('(This is not your username , This name will be visible to your App Contacts)' , style: TextStyle(color :Colors.white,fontSize: 10)),
+                              ],
+                            )
+                        ],
                       )),
                     ),
                   ),
