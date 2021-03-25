@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:thegorgeousotp/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thegorgeousotp/pages/home_page.dart';
 import 'package:thegorgeousotp/repos/storage_repo.dart';
@@ -22,47 +25,64 @@ class _ProfilePageState extends State<ProfilePage> {
    File _profileimage;
    var profilepath;
   var picker = ImagePicker();
+   final FirebaseAuth _auth = FirebaseAuth.instance;
  Directory appDocDir;
+
+
+
+
+ var userPhotos;
+      Future<void> getPhoto( ) async {
+        var id = _auth.currentUser.uid;
+        CircularProgressIndicator.adaptive();
+        //query the user photo
+        await FirebaseFirestore.instance.collection("users").doc(id).snapshots().listen((event) {
+          setState(() {
+            userPhotos = event.get("photoUrl");
+            print(userPhotos);
+          });
+        });
+      }
+
 
 @override
 void initState() { 
   super.initState();
+  getPhoto();
   setState(() {
     
   });
  print(profilepath);
 }
  
-documentdirectory(_image ,pathImage ,pickedFile)async {
- print('houiiiugugiygu');
- appDocDir =  await getApplicationDocumentsDirectory();
- String appDocPath = appDocDir.path;
-final File localImage = await pickedFile.copy('$appDocPath/$pathImage');
+// documentdirectory(_image ,pathImage ,pickedFile)async {
+//  print('houiiiugugiygu');
+//  appDocDir =  await getApplicationDocumentsDirectory();
+//  String appDocPath = appDocDir.path;
+// final File localImage = await pickedFile.copy('$appDocPath/$pathImage');
 
 
-SharedPreferences prefs = await SharedPreferences.getInstance();
-prefs.setString('profile_image', localImage.path);
+// SharedPreferences prefs = await SharedPreferences.getInstance();
+// prefs.setString('profile_image', localImage.path);
 
-setState(() {
-  profilepath = prefs.getString('profile_image'); 
-});
+// setState(() {
+//   profilepath = prefs.getString('profile_image'); 
+// });
 
-setState(() {
-   _image = FileImage(File(prefs.getString('profile_image')));
-});
-print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'+ profilepath);
-}
+// setState(() {
+//    _image = FileImage(File(prefs.getString('profile_image')));
+// });
+// print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'+ profilepath);
+// }
 
   //  getting selecting profile picture for user
   Future getImage() async {
     var pickedFile = await picker.getImage(source: ImageSource.gallery );
       if (pickedFile != null)  {
         _image = File(pickedFile.path);
-        CircularProgressIndicator();
-         var pathimage= basename(_image.path);
          _cropImage(pickedFile.path);
-         documentdirectory(_image ,pathimage,pickedFile);
-         CircularProgressIndicator();
+        //  documentdirectory(_image ,pathimage,pickedFile);
+
       } else {
         print('No image selected.');
       }
@@ -75,110 +95,126 @@ print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'+ profilepath);
     );
      if (croppedImage != null)  {
         _image = croppedImage;
+
        await StorageRepo().uploadPic(_image) ;
+         CircularProgressIndicator.adaptive();
           print('completed' );
       setState(() {
-        
+        _image = croppedImage;
       });
     }
 }
 
+@override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: MyColors.maincolor ,
-        title: Text('Profile Info'),
-         leading: new IconButton(
-          icon: new Icon(Icons.arrow_back),
-          onPressed: () =>   Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) => HomePage()))
+        title: Text('Profile Info'
         )
       ),
       body:Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              SizedBox(
-                height: 20.0,
+              // SizedBox(
+              //   height: 20.0,
+              // ),
+              Container(
+                height: MediaQuery.of(context).size.height*0.28,
+                decoration: BoxDecoration(
+                color: MyColors.maincolor,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(80.0),
+                  bottomRight: Radius.circular(80.0),
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Align(
-                    alignment: Alignment.center,
-                    child: GestureDetector(
-                      onTap: getImage,
-                      child: CircleAvatar(
-                        radius: 70,
-                        backgroundColor: Colors.black,
-                        child: ClipOval(
-                          child: AspectRatio(
-                            aspectRatio: 1,
-                            child: SizedBox(
-                              width:double.infinity,
-                              height: double.infinity,
-                              child: (_image!=null )?Image.file(
-                                _image,
-                                fit: BoxFit.fill,
-                              ) :     Image.network(
-                                "https://firebasestorage.googleapis.com/v0/b/hellochat-e7e2e.appspot.com/o/%2B18888888888.jpg?alt=media&token=49e33390-6c0f-48c8-b558-fa9abc0b7d70",
-                                fit: BoxFit.fill,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.center,
+                      child: GestureDetector(
+                        onTap: getImage,
+                        child: CircleAvatar(
+                          
+                          radius: 70,
+                          backgroundColor: Colors.black,
+                          child: ClipOval(
+                            child: AspectRatio(
+                              aspectRatio: 1,
+                              child: SizedBox(
+                                width:double.infinity,
+                                height: double.infinity,
+                                child: (userPhotos!=null )?  Image.network(
+                                 userPhotos,
+                                  fit: BoxFit.fill,
+                                )
+                               : _image!=null? Image.file(
+                                  _image,
+                                  fit: BoxFit.fill,
+                                ) :  CircularProgressIndicator.adaptive()
                               ),
                             ),
                           ),
                         ),
                       ),
+                    ),]
                     ),
-                  ),]
-                  ), 
+              ), 
                 SizedBox(height: 50),
-                  Container(
-                    width: 300,
-                    height: 60,
-                    child: Card(
-                      color: MyColors.maincolor,
-                      child: Center(child: Column(
-                        children: [
-                          Padding(
-                           padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:10),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text('Name :' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),),
-                                SizedBox(width:10),
-                                 Text('Ascharya Soni' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),)
-                              ],
-                            ),
+                  // Container(
+                  //   width: 300,
+                  //   height: 60,
+                  //   child: Card(
+                  //     color: MyColors.maincolor,
+                  //     child: Center(child: Column(
+                  //       children: [
+                  //         Padding(
+                  //          padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:10),
+                  //           child: Row(
+                  //             mainAxisAlignment: MainAxisAlignment.center,
+                  //             crossAxisAlignment: CrossAxisAlignment.center,
+                  //             children: [
+                  //               Text('Name :' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),),
+                  //               SizedBox(width:10),
+                  //                Text('Ascharya Soni' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),)
+                  //             ],
+                  //           ),
                           
-                          ),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('(This is not your username , This name will be visible to your App Contacts)' , style: TextStyle(color :Colors.white,fontSize: 10)),
-                              ],
-                            )
-                        ],
-                      )),
-                    ),
-                  ),
-                  Container(
-                    width: 300,
-                    height: 50,
-                    child: Card(
-                      color: MyColors.maincolor,
-                      child: Center(child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal:8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text('PhoneNumber:' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),),
-                          ],
-                        ),
-                      )),
-                    ),
-                  ),
+                  //         ),
+                  //           Row(
+                  //             crossAxisAlignment: CrossAxisAlignment.end,
+                  //             mainAxisAlignment: MainAxisAlignment.center,
+                  //             children: [
+                  //               Text('(This is not your username , This name will be visible to your App Contacts)' , style: TextStyle(color :Colors.white,fontSize: 10)),
+                  //             ],
+                  //           )
+                  //       ],
+                  //     )),
+                  //   ),
+                  // ),
+                  // Container(
+                  //   width: 300,
+                  //   height: 50,
+                  //   child: Card(
+                  //     color: MyColors.maincolor,
+                  //     child: Center(child: Padding(
+                  //       padding: const EdgeInsets.symmetric(horizontal:8.0),
+                  //       child: Row(
+                  //         mainAxisAlignment: MainAxisAlignment.start,
+                  //         children: [
+                  //           Text('PhoneNumber:' , style: TextStyle(color :Colors.white,fontWeight: FontWeight.bold),),
+                  //         ],
+                  //       ),
+                  //     )),
+                  //   ),
+                  // ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20 , vertical : 20),
                     child: Container(

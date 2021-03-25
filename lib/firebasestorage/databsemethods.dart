@@ -25,8 +25,9 @@ List users =[];
   }
 
 
- Future<void> uploadUserInfo(phone,  userMap) async {
-    FirebaseFirestore.instance.collection("users").doc(phone.toString()).set(userMap).catchError((e) {
+
+ Future<void> uploadUserInfo( uid , phone,  userMap) async {
+    FirebaseFirestore.instance.collection("users").doc(uid).set(userMap).catchError((e) {
       print(e.toString());
     });
   }

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
 import 'package:thegorgeousotp/pages/contatcs1.dart';
 import 'package:thegorgeousotp/pages/profilepage.dart';
 import 'package:thegorgeousotp/stores/login_store.dart';
@@ -160,7 +161,7 @@ getUserInfo() async {
                 icon: Icon(Icons.face_retouching_natural),
                 onPressed: () {
                 // loginStore.signOut(context);
-                Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) => ProfilePage()));
+                Navigator.push(context, MaterialPageRoute(builder:(context) => ProfilePage()));
                 print("profile");
                 }))
               ]
@@ -171,8 +172,7 @@ getUserInfo() async {
                                ])     ),
                                floatingActionButton: FloatingActionButton(
                                  onPressed: ()async {
-
-                                  //  listalluser();
+                              
                                 ContactPermission().permissioncheck(context);
                                    print("hello supchat");
                                  },backgroundColor: MyColors.maincolor,

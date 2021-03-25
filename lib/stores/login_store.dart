@@ -128,9 +128,10 @@ Candidate _userFromFirebaseUser(User user) {
     firebaseUser = result.user;
         Map<String, String> userInfoMap = {
         "uid": result.user.uid,
-        "phone": result.user.phoneNumber
+        "phone": result.user.phoneNumber,
+        "photoUrl" : "https://cdn.business2community.com/wp-content/uploads/2017/08/blank-profile-picture-973460_640.png"
       };
-    DatabaseMethods().uploadUserInfo( result.user.phoneNumber , userInfoMap);
+    DatabaseMethods().uploadUserInfo(  result.user.uid,   result.user.phoneNumber , userInfoMap);
 
          _userFromFirebaseUser(result.user);
           print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' + result.user.uid);

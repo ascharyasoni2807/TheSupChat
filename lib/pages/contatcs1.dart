@@ -66,15 +66,15 @@ class _ContactsPageState extends State<ContactsPage> {
   Future<void> getContacts() async {
     
     final Iterable<Contact> contacts = await ContactsService.getContacts( withThumbnails: false , );
+    final Map netcontacts = Map.fromIterable(contacts);
     
-   Stream collectionStream = FirebaseFirestore.instance.collection('users').snapshots();
-
+       Stream collectionStream = FirebaseFirestore.instance.collection('users').snapshots();
+  print(netcontacts);
    await FirebaseFirestore.instance.collection("users").get().then((QuerySnapshot querySnapshot) {
     querySnapshot.docs.forEach((result) {
       // print(result.data());
        final Map value = result.data();
     users = value.values.toList();
-    
     print(value.values);
     print(users[1]);
     }
@@ -97,17 +97,20 @@ class _ContactsPageState extends State<ContactsPage> {
       appBar: AppBar(
         backgroundColor: MyColors.buttoncolor,
         title: appBarTitle,
-        
         actions: [
             new IconButton(icon: actionIcon,onPressed:(){
           setState(() {
                      if ( this.actionIcon.icon == Icons.search){
                       this.actionIcon = new Icon(Icons.close);
                       this.appBarTitle = new TextField(
+                        cursorHeight: 20,
                         cursorColor: Colors.white,
                         autofocus: true,
+                        autocorrect: false,
+                        style: TextStyle(color: Colors.white, fontSize: 18 ),
+                        // controller: searchController,
                         decoration: new InputDecoration(
-                          // prefixIcon: new Icon(Icons.search,color: Colors.white),
+                        
                           hintText: "Search...",
                           hintStyle: new TextStyle(color: Colors.white)
                         ),
@@ -115,10 +118,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       else {
                         this.actionIcon = new Icon(Icons.search);
                         this.appBarTitle = new Text("Select Contact");
-                      }
-
-
-                    });
+                      } });
         } ,),
         ],
       ),
@@ -132,7 +132,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                   child: ListView.builder(
                     itemCount: _contacts.length ?? 0,
                     itemBuilder: (BuildContext context, int index) {
-                      Contact contact = _contacts?.elementAt(index);
+                      Contact contact = _contacts.elementAt(index);
                       return contact.displayName!=null? ListTile(
                               contentPadding:
                                   const EdgeInsets.symmetric(vertical: 2, horizontal: 18),
@@ -142,9 +142,9 @@ class _ContactsPageState extends State<ContactsPage> {
                                     )
                                   : CircleAvatar(
                                       child: Text(contact.initials()),
-                                      backgroundColor: Theme.of(context).accentColor,
+                                      backgroundColor: MyColors.maincolor,
                                     ),
-                              title:  Text(contact.displayName ),
+                              title:  Text(contact.displayName , style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18), ),
                               //This can be further expanded to showing contacts detail
                               // onPressed().
                           

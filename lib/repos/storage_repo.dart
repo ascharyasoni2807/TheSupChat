@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/cupertino.dart';
@@ -11,27 +13,40 @@ class StorageRepo{
  File profileImage;
  final picker = ImagePicker();
  List<firebase_storage.UploadTask> _uploadTasks = [];
-
+final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
  
  Future uploadPic(File file ) async {
  String a;
+ String downloadUrl;
  profileImage = file;
  print(file);
-
+ var user = await _auth.currentUser;
   a = '+18888888888.jpg';
   print(a);
- 
-
   if (file!=null){
     firebase_storage.Reference reference =
-        firebase_storage.FirebaseStorage.instance.ref().child('$a');
+        firebase_storage.FirebaseStorage.instance.ref().child("user/profiles/${user.uid}");
     firebase_storage.UploadTask uploadTask = reference.putFile(file );
-    firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => print('complete'));
-    print(uploadTask.snapshot);    }
-    print(Candidate().uid );
-    print('completed');
+    firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => 
     
+    print('complete'));
+     downloadUrl = await taskSnapshot.ref.getDownloadURL();
+    print(uploadTask.snapshot); 
+    //  _scaffoldKey.currentState.showSnackBar( SnackBar(content: Text("Profile Pic updated")));  
+       }
+    print('completed');
+ 
+ //uploading in users data
+    FirebaseFirestore.instance
+  .collection('users')
+    .doc('${user.uid}')
+     .update({
+        "photoUrl" : downloadUrl.toString()
+      });
+  return downloadUrl;
  }
+
 
 
 
