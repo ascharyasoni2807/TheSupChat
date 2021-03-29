@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
 import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
 import 'package:thegorgeousotp/pages/home_page.dart';
 import 'package:thegorgeousotp/pages/login_page.dart';
+import 'package:thegorgeousotp/pages/onboardprofile.dart';
 import 'package:thegorgeousotp/pages/otp_page.dart';
 import 'package:thegorgeousotp/pages/profilepage.dart';
 import 'package:thegorgeousotp/repos/candidate.dart';
@@ -126,16 +128,26 @@ Candidate _userFromFirebaseUser(User user) {
     isOtpLoading = true;
 
     firebaseUser = result.user;
-        Map<String, String> userInfoMap = {
-        "uid": result.user.uid,
-        "phone": result.user.phoneNumber,
-        "photoUrl" : "https://cdn.business2community.com/wp-content/uploads/2017/08/blank-profile-picture-973460_640.png"
-      };
-    DatabaseMethods().uploadUserInfo(  result.user.uid,   result.user.phoneNumber , userInfoMap);
 
-         _userFromFirebaseUser(result.user);
-          print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' + result.user.uid);
+        final snapShot = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(result.user.uid)
+      .get();
+
+    if (snapShot == null || !snapShot.exists) {
+      print("hurrrrrrrrrrrrrrrrrayyyy  your  new here    ");
+      print(snapShot.data());
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => OnboardProfilePage(user : result.user)), (Route<dynamic> route) => false);
+  // Document with id == docId doesn't exist.
+    }else {
+        print("hurrrrrrrrrrrrrrrrrayyyy  your  already exist there   ");
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) =>  HomePage()), (Route<dynamic> route) => false);
+    }
+  
+         _userFromFirebaseUser(result.user);
+
+         
+       
 
     isLoginLoading = false;
     isOtpLoading = false;

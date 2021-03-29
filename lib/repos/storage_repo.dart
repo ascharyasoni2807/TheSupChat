@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
 import 'package:thegorgeousotp/repos/candidate.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -15,14 +16,13 @@ class StorageRepo{
  List<firebase_storage.UploadTask> _uploadTasks = [];
 final _scaffoldKey = GlobalKey<ScaffoldState>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
- 
+ String downloadUrl;
  Future uploadPic(File file ) async {
  String a;
- String downloadUrl;
+ 
  profileImage = file;
  print(file);
  var user = await _auth.currentUser;
-  a = '+18888888888.jpg';
   print(a);
   if (file!=null){
     firebase_storage.Reference reference =
@@ -42,13 +42,17 @@ final _scaffoldKey = GlobalKey<ScaffoldState>();
   .collection('users')
     .doc('${user.uid}')
      .update({
-        "photoUrl" : downloadUrl.toString()
+        "profilePicture" : downloadUrl.toString()
       });
+  DatabaseMethods().updateProfilePictureinRTDB(user.uid, downloadUrl);
+
   return downloadUrl;
  }
 
-
-
+ getCurrentUidofUser() async {
+   var user = await _auth.currentUser;
+   return user;
+ }
 
 
 

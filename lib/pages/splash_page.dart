@@ -15,48 +15,61 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> {
  
+
+
+
+
+
+
   @override
   void initState() {
     super.initState();
-    Provider.of<LoginStore>(context, listen: false).isAlreadyAuthenticated().then((result) {
+    
+     Future.delayed(
+      Duration(seconds: 1),
+      () {
+ Provider.of<LoginStore>(context, listen: false).isAlreadyAuthenticated().then((result) {
       if (result) {
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const HomePage()), (Route<dynamic> route) => false);
       } else {
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginPage()), (Route<dynamic> route) => false);
       }
     });
+
+      });
+
+   
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       // backgroundColor: MyColors.maincolor,
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      body: Container(
+        // color:MyColors.maincolor,
+        child: Column(
+          
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
  children: [
     Center( child: Container(
-                                        height: 240,
-                                        width: 500,
-                                        constraints: const BoxConstraints(
-                                          maxWidth: 500
-                                        ),
-                                        //Color(0xFFE1E0F5)
-                                        margin: const EdgeInsets.only(top: 70),
-                                        decoration: const BoxDecoration(color: MyColors.maincolor , borderRadius: BorderRadius.all(Radius.circular(1000))),
-                                       child: Center(
-                                         child: Text("TheSupChat",
-                                         style:  GoogleFonts.redressed(
-                                              textStyle: TextStyle(
-                              color: Colors.white,
-                              letterSpacing: 3,
-                              fontSize: 60,
-                              fontWeight: FontWeight.bold)
-                                         )
-                                         )
-                                         )   ),
-                                    ),
+                                          height: 100,
+                                          // width: 500,
+                                         child: Center(
+                                           child: Text("TheSupChat",
+                                           style:  GoogleFonts.redressed(
+                                                textStyle: TextStyle(
+                                color: MyColors.maincolor,
+                                letterSpacing: 3,
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold)
+                                           )
+                                           )
+                                           )   ),
+                                      ),
  ],
+        ),
       ),
 
     );

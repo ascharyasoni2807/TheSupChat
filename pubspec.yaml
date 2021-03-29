@@ -13,6 +13,7 @@ dependencies:
   cloud_firestore: ^1.0.1
   contacts_service: ^0.4.6
   cupertino_icons: ^1.0.2
+  firebase_database: ^6.1.1
   firebase_auth: ^1.0.1
   firebase_core: ^1.0.1
   flutter_mobx: ^1.1.0
@@ -26,6 +27,7 @@ dependencies:
   permission_handler: ^6.1.0
   provider: ^5.0.0
   shared_preferences: ^2.0.5
+  cached_network_image: ^2.5.1
 
 dev_dependencies:
   flutter_test:
@@ -38,4 +40,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/img/
+    - assets/img/pp.png

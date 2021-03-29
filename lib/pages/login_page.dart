@@ -64,22 +64,12 @@ class _LoginPageState extends State<LoginPage> {
                                        )   ),
                                   ),
                                 
-                                  // Center(
-                                  //   child: Container(
-                                  //       constraints: const BoxConstraints(maxHeight: 340),
-                                  //       margin: const EdgeInsets.symmetric(horizontal: 8),
-                                       
-                                  //       // Image.asset('assets/img/login.png')),
-                                  //  ) ),
+                             
                                 ],
                               ),
                             ),
                             
-                            // Container(
-                            //   padding: EdgeInsets.symmetric(horizontal:5 , vertical: 5),
-                            //   alignment: Alignment.topLeft,
-                            //   child: Text( " A New way to \n connect with your \n fav ones." ,style: TextStyle(color: Colors.white, fontSize: 30 , fontWeight: FontWeight.w500, fontStyle: FontStyle.italic))
-                            // ),
+                           
                              Container(
                                 margin: const EdgeInsets.symmetric(horizontal: 10 , vertical: 45),
                                 // ignore: prefer_const_constructors
