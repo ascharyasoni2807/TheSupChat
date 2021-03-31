@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
 import 'package:thegorgeousotp/repos/storage_repo.dart';
 
 final databaseReference = FirebaseDatabase.instance.reference();
@@ -185,6 +186,20 @@ class DatabaseMethods {
   }
 
    addConvMessage(String chatroomId, messageMap) {
+    FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(chatroomId)
+        .collection("chats")
+        .add(messageMap)
+        .catchError((e) {
+      print(e.toString());
+    }).then((value) => print(value));
+  }
+
+
+   addImageConvMessage(String chatroomId, messageMap ) {
+    // ImageUploadProvider _imageUploadProvider;
+    
     FirebaseFirestore.instance
         .collection("ChatRoom")
         .doc(chatroomId)

@@ -1,12 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:thegorgeousotp/enum/view_state.dart';
 import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
+import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
+import 'package:thegorgeousotp/repos/storage_repo.dart';
 import 'package:thegorgeousotp/theme.dart';
+import 'package:thegorgeousotp/widgets/cachedImage.dart';
+import 'package:thegorgeousotp/widgets/cirindi.dart';
 import 'package:thegorgeousotp/widgets/gradientbar.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -20,9 +27,12 @@ class ChatScreen extends StatefulWidget {
 Stream chatMessageStream;
 var server;
 var contact;
+var otherUid;
 TextEditingController messagetext = new TextEditingController();
 
 class _ChatScreenState extends State<ChatScreen> {
+  ImageUploadProvider _imageUploadProvider;
+
   showAttachmentBottomSheet(context) {
     showModalBottomSheet(
         context: context,
@@ -50,11 +60,33 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   showFilePicker(FileType fileType) async {
-    File file = await FilePicker.getFile(type: fileType);
-    // chatBloc.dispatch(SendAttachmentEvent(chat.chatId,file,fileType));
-    print(file.path);
+    CircularIndi();
+    File file = await FilePicker.getFile(type: fileType );
+    print(fileType);
     Navigator.pop(context);
+    String url = await StorageRepo().uploadChatPic(file, otherUid, _imageUploadProvider);
+    print(url);
+    
+    // chatBloc.dispatch(SendAttachmentEvent(chat.chatId,file,fileType));
+    sendImage(url, fileType);
+    print(file.path);
+    
+    GradientSnackBar.showMessage(context, "sending completed");
     // GradientSnackBar.showMessage(context, 'Sending attachment..');
+  }
+
+  sendImage(url, fileType) async {
+    Map<String, dynamic> imagedetailMap = {
+      "imageUrl": url.toString(),
+      "sendBy": "KartikSoni",
+      "message": "Image is  here",
+      "time": DateTime.now().millisecondsSinceEpoch,
+      "type": fileType.toString()
+    };
+    await DatabaseMethods()
+        .addImageConvMessage("KartikSoni_welcome", imagedetailMap, );
+    // GradientSnackBar.showError(context,"Image sent");
+    print("Dedoneee");
   }
 
   sendMessage() async {
@@ -65,12 +97,6 @@ class _ChatScreenState extends State<ChatScreen> {
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
-      DateTime _now = DateTime.now();
-      print('timestamp: ${_now.day}:${_now.month}:${_now.hour}.${_now.minute}');
-      Timestamp time = Timestamp.now();
-      var a = DateTime.fromMicrosecondsSinceEpoch(time.microsecondsSinceEpoch);
-      print(a);
-
       await DatabaseMethods().addConvMessage("KartikSoni_welcome", messageMap);
       messagetext.text = '';
     }
@@ -78,32 +104,36 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget textInput() {
     return TextField(
-      style: TextStyle(fontSize:19 ,color: Colors.white),
-                  maxLines: null,
-                  controller: messagetext,
-                  onTap: () {},
-                  decoration: InputDecoration(
-                      prefixIcon: IconButton(
-                        icon: Icon(Icons.add , color: Colors.white,),
-                        onPressed: () {
-                           print("add button");
-                  showAttachmentBottomSheet(context);
-                  // GradientSnackBar.showError(context, "Hello");
-                        },
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.send , color: Colors.white,),
-                        onPressed: () {
-                          print("sending message");
-    //               sendMessage();
-                        },
-                      ),
-                      
-                      hintText: "Type a message here.....",
-                      hintStyle: TextStyle(color: Colors.white54),
-                      border: InputBorder.none),
-                );
-    
+      style: TextStyle(fontSize: 19, color: Colors.white),
+      maxLines: null,
+      controller: messagetext,
+      onTap: () {},
+      decoration: InputDecoration(
+          prefixIcon: IconButton(
+            icon: Icon(
+              Icons.add,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              print("add button");
+              showAttachmentBottomSheet(context);
+              // GradientSnackBar.showError(context, "Hello");
+            },
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(
+              Icons.send,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              print("sending message");
+              sendMessage();
+            },
+          ),
+          hintText: "Type a message here.....",
+          hintStyle: TextStyle(color: Colors.white54),
+          border: InputBorder.none),
+    );
   }
 
   @override
@@ -119,6 +149,7 @@ class _ChatScreenState extends State<ChatScreen> {
         chatMessageStream = value;
         server = widget.server;
         contact = widget.contact;
+        otherUid = server["uid"];
       });
       print(server);
       print(contact);
@@ -129,6 +160,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -149,7 +182,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: Colors.black,
                   ),
                 ),
-               const SizedBox(
+                const SizedBox(
                   width: 2,
                 ),
                 CircleAvatar(
@@ -174,10 +207,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: <Widget>[
                       Text(
                         contact.displayName,
-                        style:const TextStyle(
+                        style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
-                    const  SizedBox(
+                      const SizedBox(
                         height: 6,
                       ),
                       Text(
@@ -188,7 +221,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 ),
-               const Icon(
+                const Icon(
                   Icons.settings,
                   color: Colors.black54,
                 ),
@@ -204,25 +237,38 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Container(
               child: Stack(
                 children: <Widget>[
+                 
                   ChatMessageList(),
+                 
+                  //       RaisedButton(onPressed: () {
+                  //   _imageUploadProvider.getViewState == ViewState.Loading
+                  //       ? _imageUploadProvider.setToIdle()
+                  //       : _imageUploadProvider.setToLoading();
+                  //       print("wyewew");
+                  // })
+                     
                 ],
               ),
             ),
           ),
+           _imageUploadProvider.getViewState == ViewState.Loading
+                      ? Container(
+                        alignment: Alignment.bottomRight,
+                        margin: EdgeInsets.only(right:15),
+                        child: CircularProgressIndicator())
+                      : Container(),
           // ignore: prefer_const_constructors
           Container(
-            decoration:BoxDecoration(
-                    color: const Color(0xff536162),
-                    borderRadius: BorderRadius.circular(30),
-                  ), 
-            margin: const EdgeInsets.symmetric(horizontal:8 , vertical :5),
-           
-            child:  ConstrainedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xff536162),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            child: ConstrainedBox(
                 constraints: const BoxConstraints(
-              
                   maxHeight: 150.0,
                 ),
-                child:textInput()),
+                child: textInput()),
           ),
 
           // textInput()
@@ -236,18 +282,39 @@ class TileMessage extends StatelessWidget {
   final String message;
   final bool isSendByMe;
   final timing;
-  TileMessage(this.message, this.isSendByMe, this.timing);
+  final type;
+  final imageUrl;
+  TileMessage(this.type,this.message, this.isSendByMe, this.timing ,this.imageUrl);
 
   @override
   Widget build(BuildContext context) {
     // DateTime myDateTime = timing.toDate();
 
-   final  date = DateTime.fromMillisecondsSinceEpoch(timing);
-   final  formattedDate = DateFormat.yMMMd().add_jm().format(date);
-  
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 2),
-      padding: EdgeInsets.symmetric(horizontal: 6),
+    final date = DateTime.fromMillisecondsSinceEpoch(timing);
+    final formattedDate = DateFormat.yMMMd().add_jm().format(date);
+
+    return type!=null && type == "FileType.IMAGE" ? 
+    
+    Container(
+     
+      padding: EdgeInsets.symmetric(horizontal:5),
+       margin: isSendByMe? const EdgeInsets.only(top: 12,left: 110):const EdgeInsets.only(top: 12,right: 110),
+      //  height: 210,
+      //  width: 200,
+      alignment: isSendByMe? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        children: [
+          CachedImage(imageUrl:imageUrl),
+          Text(formattedDate,
+                textAlign: isSendByMe ? TextAlign.end : TextAlign.left,
+                style: const TextStyle(color: Colors.black, fontSize: 10))
+        ],
+      ),
+    )
+    
+   : Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       width: MediaQuery.of(context).size.width * 0.7,
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.70,
@@ -268,7 +335,7 @@ class TileMessage extends StatelessWidget {
                     topLeft: Radius.circular(10),
                     topRight: Radius.circular(10),
                     bottomLeft: Radius.circular(10))
-                :const BorderRadius.only(
+                : const BorderRadius.only(
                     topLeft: Radius.circular(10),
                     topRight: Radius.circular(10),
                     bottomRight: Radius.circular(10),
@@ -283,15 +350,14 @@ class TileMessage extends StatelessWidget {
             Container(
               child: SelectableText(
                 message,
-                style:const TextStyle(
+                style: const TextStyle(
                     color: Colors.white, letterSpacing: 0, fontSize: 16),
               ),
             ),
-         const   SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(formattedDate,
                 textAlign: isSendByMe ? TextAlign.end : TextAlign.left,
                 style: const TextStyle(color: Colors.white, fontSize: 8))
-         
           ],
         ),
       ),
@@ -321,9 +387,12 @@ class ChatMessageList extends StatelessWidget {
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
                 return TileMessage(
+                  snapshot.data.docs[index].data()["type"],
                     snapshot.data.docs[index].data()["message"],
                     snapshot.data.docs[index].data()["sendBy"] == "KartikSoni",
-                    (snapshot.data.docs[index].data()["time"]));
+                    (snapshot.data.docs[index].data()["time"]),
+                    snapshot.data.docs[index].data()["imageUrl"]
+                    );
               });
         });
   }

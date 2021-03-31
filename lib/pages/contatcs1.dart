@@ -153,8 +153,8 @@ class _ContactsPageState extends State<ContactsPage> {
             onPressed: () {
               setState(() {
                 if (this.actionIcon.icon == Icons.search) {
-                  this.actionIcon = new Icon(Icons.close);
-                  this.appBarTitle = new TextField(
+                  this.actionIcon = Icon(Icons.close);
+                  this.appBarTitle =  TextField(
                     cursorHeight: 20,
                     cursorColor: Colors.white,
                     autofocus: true,

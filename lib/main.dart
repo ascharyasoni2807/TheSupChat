@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:thegorgeousotp/pages/profilepage.dart';
 import 'package:thegorgeousotp/pages/splash_page.dart';
+import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
 import 'package:thegorgeousotp/stores/login_store.dart';
 import 'package:thegorgeousotp/stores/profileStore.dart';
 
@@ -28,6 +29,9 @@ class _AppState extends State<App> {
         ),
         Provider<ProfileStore>(
           create: (_) => ProfileStore(),
+        ),
+        ChangeNotifierProvider<ImageUploadProvider>(
+          create: (_) =>ImageUploadProvider(),
         )
       ],
       child: const MaterialApp(

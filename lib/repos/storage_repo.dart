@@ -7,16 +7,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
+import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
 import 'package:thegorgeousotp/repos/candidate.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:thegorgeousotp/widgets/gradientbar.dart';
 
 class StorageRepo{
  File profileImage;
  final picker = ImagePicker();
  List<firebase_storage.UploadTask> _uploadTasks = [];
 final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+final FirebaseAuth _auth = FirebaseAuth.instance;
  String downloadUrl;
+ 
  Future uploadPic(File file ) async {
  String a;
  
@@ -48,6 +51,28 @@ final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   return downloadUrl;
  }
+
+
+
+
+Future uploadChatPic(File file , otherUid, ImageUploadProvider _imageUploadProvider) async {
+var user = await _auth.currentUser;
+var imageurl;
+
+_imageUploadProvider.setToLoading();
+  firebase_storage.Reference reference =
+        firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}"+"_"+ otherUid);
+    firebase_storage.UploadTask uploadTask = reference.putFile(file );
+    firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() =>  print('complete'));
+    imageurl  = await taskSnapshot.ref.getDownloadURL();
+    print(uploadTask.snapshot); 
+ _imageUploadProvider.setToIdle();
+    return imageurl;
+ 
+  
+    //  _scaffoldKey.currentState.showSnackBar( SnackBar(content: Text("Profile Pic updated")));  
+ }
+
 
  getCurrentUidofUser() async {
    var user = await _auth.currentUser;
