@@ -63,8 +63,8 @@ class _HomePageState extends State<HomePage> {
                             return Chatroomtile(
                                 userName: snapshot.data.docs[index]
                                     .data()["chatroomId"]
-                                    .toString()
-                                    .replaceAll("_", ""),
+                                    .toString(),
+                                    // .replaceAll("_", ""),
                                 // .replaceAll(Constants.myName, ''),
                                 chatRoomId:
                                     snapshot.data.docs[index].data()["email"],
@@ -114,9 +114,10 @@ class _HomePageState extends State<HomePage> {
   getUserInfo() async {
     print('heeloji');
 
-    var value = await FirebaseFirestore.instance
-        .collection("ChatRoom")
-        .where("users", arrayContains: 'commando')
+    var value = await FirebaseFirestore.instance.collection("ChatRoom/${_auth.currentUser.phoneNumber.toString()}/ListUsers")
+        // collection("ListUsers")
+        // .where("uid" , isEqualTo : _auth.currentUser.uid.toString())
+        // .where("users", arrayContains: 'commando')
         .snapshots();
 
     setState(() {

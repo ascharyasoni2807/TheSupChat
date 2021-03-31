@@ -97,10 +97,11 @@ class DatabaseMethods {
         FirebaseFirestore.instance
             .collection("ChatRoom")
             .doc(_auth.currentUser.phoneNumber)
-            .collection("Chats")
+            .collection("ListUsers")
             .doc(_auth.currentUser.uid.toString()+"_"+serveruid)
             .set(selfchatRoomMap);
         if (serversnapShot.data() == null || !serversnapShot.exists) {
+
           FirebaseFirestore.instance
               .collection("ChatRoom")
               .doc(serverPhone)
@@ -113,7 +114,7 @@ class DatabaseMethods {
             FirebaseFirestore.instance
                 .collection("ChatRoom")
                 .doc(serverPhone.toString())
-                .collection("Chats")
+                .collection("ListUsers")
                 .doc(serveruid+"_"+_auth.currentUser.uid.toString())
                 .set(secondchatRoomMap)
                 .catchError((e) {
@@ -125,7 +126,7 @@ class DatabaseMethods {
           FirebaseFirestore.instance
               .collection("ChatRoom")
               .doc(serverPhone.toString())
-              .collection("Chats")
+              .collection("ListUsers")
               .doc(serveruid+"_"+_auth.currentUser.uid.toString())
               .set(secondchatRoomMap)
               .catchError((e) {
@@ -138,7 +139,7 @@ class DatabaseMethods {
       FirebaseFirestore.instance
           .collection("ChatRoom")
           .doc(_auth.currentUser.phoneNumber)
-          .collection("Chats")
+          .collection("ListUsers")
           .doc(_auth.currentUser.uid.toString()+"_"+serveruid)
           .set(selfchatRoomMap);
 
@@ -156,7 +157,7 @@ class DatabaseMethods {
             FirebaseFirestore.instance
                 .collection("ChatRoom")
                 .doc(serverPhone.toString())
-                .collection("Chats")
+                .collection("ListUsers")
                 .doc(serveruid+"_"+_auth.currentUser.uid.toString())
                 .set(secondchatRoomMap)
                 .catchError((e) {
@@ -168,7 +169,7 @@ class DatabaseMethods {
           FirebaseFirestore.instance
               .collection("ChatRoom")
               .doc(serverPhone.toString())
-              .collection("Chats")
+              .collection("ListUsers")
               .doc(serveruid+"_"+_auth.currentUser.uid.toString())
               .set(secondchatRoomMap)
               .catchError((e) {
@@ -181,6 +182,31 @@ class DatabaseMethods {
 
 
 
+  }
+
+   addConvMessage(String chatroomId, messageMap) {
+    FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(chatroomId)
+        .collection("chats")
+        .add(messageMap)
+        .catchError((e) {
+      print(e.toString());
+    }).then((value) => print(value));
+  }
+
+
+   getConvoMessage(String chatroomId) async {
+    return await FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc("KartikSoni_welcome")
+        .collection("chats")
+        .orderBy("time", descending: true)
+        .snapshots();
+    // .then(
+    //     (QuerySnapshot querySnapshot) => querySnapshot.docs.forEach((doc) {
+    //           print((doc["message"]));
+    //         }));
   }
 
   Future<void> savePhonenumber(phone) async {

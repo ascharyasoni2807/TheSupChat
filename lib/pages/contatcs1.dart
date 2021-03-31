@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
+import 'package:thegorgeousotp/pages/chatScreen.dart';
 import 'package:thegorgeousotp/theme.dart';
 import 'package:thegorgeousotp/repos/storage_repo.dart';
 
@@ -11,10 +12,8 @@ class ContactsPage extends StatefulWidget {
   _ContactsPageState createState() => _ContactsPageState();
 }
 
-
 class _ContactsPageState extends State<ContactsPage> {
-
-   final   FirebaseFirestore _auth = FirebaseFirestore.instance;
+  final FirebaseFirestore _auth = FirebaseFirestore.instance;
   Iterable<Contact> _contacts;
   // QuerySnapshot dbcontacts;
   List users = [];
@@ -38,26 +37,38 @@ class _ContactsPageState extends State<ContactsPage> {
     });
   }
 
- createChatRoom(server) async {
-     
+  createChatRoom(server, contact) async {
     var currentUid = await StorageRepo().getCurrentUidofUser();
 
     print(server["uid"]);
-  
-     List<String> users = [server["uid"] , currentUid.uid  ];
-     List<String> phones= [server["phoneNumberWithCountry"] , currentUid.phoneNumber];
-     print(phones);
-     print(users);
-      Map<String, dynamic> selfchatRoomMap = {
-        "users":  users,
-        "chatroomId": server["phoneNumberWithCountry"].toString()
-      };
-      print(users.reversed.toList());
-       Map<String, dynamic> secondchatRoomMap = {
-        "users":  users.reversed.toList(),
-        "chatroomId": currentUid.phoneNumber.toString()
-      };
-  await DatabaseMethods().createChatRoom(server["uid"],server["phoneNumberWithCountry"].toString(),selfchatRoomMap, secondchatRoomMap);
+
+    List<String> users = [server["uid"], currentUid.uid];
+    List<String> phones = [
+      server["phoneNumberWithCountry"],
+      currentUid.phoneNumber
+    ];
+    print(phones);
+    print(users);
+    Map<String, dynamic> selfchatRoomMap = {
+      "users": users,
+      "chatroomId": server["phoneNumberWithCountry"].toString()
+    };
+    print(users.reversed.toList());
+    Map<String, dynamic> secondchatRoomMap = {
+      "users": users.reversed.toList(),
+      "chatroomId": currentUid.phoneNumber.toString()
+    };
+    DatabaseMethods()
+        .createChatRoom(
+            server["uid"],
+            server["phoneNumberWithCountry"].toString(),
+            selfchatRoomMap,
+            secondchatRoomMap)
+        .then((value) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return ChatScreen(server: server, contact: contact);
+      }));
+    });
     print("inserver");
   }
   // filterContacts() {
@@ -164,100 +175,110 @@ class _ContactsPageState extends State<ContactsPage> {
         ],
       ),
       body: foundusers != null
-          ?  isbuilding ? Container(
-              child: Column(
-                children: [
-                  Expanded(
-                      child: foundusers != null
-                          ? ListView.builder(
-                              itemCount: foundusers.length ?? 0,
-                              itemBuilder: (BuildContext context, int index) {
-                                final _contact = foundusers.elementAt(index);
-                                Contact contact = _contact["phoneData"];
-                                final serverData = _contact["serverData"];
-                                //  setState(() {
-                                //      isbuilding = true;
-                                //  });
+          ? isbuilding
+              ? Container(
+                  child: Column(
+                    children: [
+                      Expanded(
+                          child: foundusers != null
+                              ? ListView.builder(
+                                  itemCount: foundusers.length ?? 0,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    final _contact =
+                                        foundusers.elementAt(index);
+                                    Contact contact = _contact["phoneData"];
+                                    final serverData = _contact["serverData"];
+                                    //  setState(() {
+                                    //      isbuilding = true;
+                                    //  });
 
-                                return contact != null
-                                    ? Container(
-                                        padding: EdgeInsets.only(top: 2),
-                                        child: ListTile(
-                                          minVerticalPadding: 5,
-                                          onTap: () {
-                                            print("helloo");
-                                            createChatRoom(serverData);
-                                          },
-
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                            vertical: 2,
-                                          ),
-                                          leading: serverData[
-                                                      "profilePicture"] !=
-                                                  null
-                                              ? CircleAvatar(
-                                                  radius: 50,
-                                                  backgroundColor: Colors.black,
-                                                  child: ClipOval(
-                                                    child: AspectRatio(
-                                                      aspectRatio: 1,
-                                                      child: SizedBox(
-                                                          height: 20,
-                                                          width: 20,
-                                                          child:
-                                                              CachedNetworkImage(
-                                                            imageUrl: serverData[
-                                                                "profilePicture"],
-                                                            progressIndicatorBuilder: (context,
-                                                                    url,
-                                                                    downloadProgress) =>
-                                                                CircularProgressIndicator(
-                                                                    value: downloadProgress
-                                                                        .progress),
-                                                            errorWidget:
-                                                                (context, url,
-                                                                        error) =>
-                                                                    Icon(Icons
-                                                                        .error),
-                                                          )),
-                                                    ),
-                                                  ),
-                                                )
-                                              : CircleAvatar(
-                                                  child:
-                                                      Text(contact.initials()),
-                                                  backgroundColor:
-                                                      MyColors.maincolor,
+                                    return contact != null
+                                        ? Container(
+                                            padding: EdgeInsets.only(top: 2),
+                                            child: InkWell(
+                                              onTap: () {
+                                                createChatRoom(
+                                                    serverData, contact);
+                                              },
+                                              onDoubleTap: () {},
+                                              splashColor: Colors.grey,
+                                              child: ListTile(
+                                                minVerticalPadding: 5,
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                  vertical: 2,
                                                 ),
-                                          title: Text(
-                                            contact.displayName,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18),
-                                          ),
-                                          subtitle: Text(
-                                            contact.phones.length != 0
-                                                ? contact.phones.first.value
-                                                : '',
-                                            style: TextStyle(
-                                              fontSize: 14,
+                                                leading: serverData[
+                                                            "profilePicture"] !=
+                                                        null
+                                                    ? CircleAvatar(
+                                                        radius: 50,
+                                                        backgroundColor:
+                                                            Colors.black,
+                                                        child: ClipOval(
+                                                          child: AspectRatio(
+                                                            aspectRatio: 1,
+                                                            child: SizedBox(
+                                                                height: 20,
+                                                                width: 20,
+                                                                child:
+                                                                    CachedNetworkImage(
+                                                                  imageUrl:
+                                                                      serverData[
+                                                                          "profilePicture"],
+                                                                  progressIndicatorBuilder: (context,
+                                                                          url,
+                                                                          downloadProgress) =>
+                                                                      CircularProgressIndicator(
+                                                                          value:
+                                                                              downloadProgress.progress),
+                                                                  errorWidget: (context,
+                                                                          url,
+                                                                          error) =>
+                                                                      Icon(Icons
+                                                                          .error),
+                                                                )),
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : CircleAvatar(
+                                                        child: Text(
+                                                            contact.initials()),
+                                                        backgroundColor:
+                                                            MyColors.maincolor,
+                                                      ),
+                                                title: Text(
+                                                  contact.displayName,
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 18),
+                                                ),
+                                                subtitle: Text(
+                                                  contact.phones.length != 0
+                                                      ? contact
+                                                          .phones.first.value
+                                                      : '',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                //This can be further expanded to showing contacts detail
+                                                // onPressed().
+                                              ),
                                             ),
-                                          ),
-                                          //This can be further expanded to showing contacts detail
-                                          // onPressed().
-                                        ),
-                                      )
-                                    : SizedBox.shrink();
-                              },
-                            )
-                          : Center(child: const CircularProgressIndicator()))
-                ],
-              ),
-            )
-          : Center(child: const CircularProgressIndicator()): Center(child: const CircularProgressIndicator()),
+                                          )
+                                        : SizedBox.shrink();
+                                  },
+                                )
+                              : Center(
+                                  child: const CircularProgressIndicator()))
+                    ],
+                  ),
+                )
+              : Center(child: const CircularProgressIndicator())
+          : Center(child: const CircularProgressIndicator()),
     );
   }
-
- 
 }
