@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart';
@@ -11,6 +12,7 @@ import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
 import 'package:thegorgeousotp/repos/candidate.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:thegorgeousotp/widgets/gradientbar.dart';
+import 'package:image/image.dart' as Im; 
 
 class StorageRepo{
  File profileImage;
@@ -59,10 +61,15 @@ Future uploadChatPic(File file , otherUid, ImageUploadProvider _imageUploadProvi
 var user = await _auth.currentUser;
 var imageurl;
 
+
+final tempDir = await getTemporaryDirectory();
+    final path = tempDir.path;
+
+
 _imageUploadProvider.setToLoading();
   firebase_storage.Reference reference =
         firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}"+"_"+ otherUid);
-    firebase_storage.UploadTask uploadTask = reference.putFile(file );
+    firebase_storage.UploadTask uploadTask = reference.putFile(file);
     firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() =>  print('complete'));
     imageurl  = await taskSnapshot.ref.getDownloadURL();
     print(uploadTask.snapshot); 
@@ -78,6 +85,13 @@ _imageUploadProvider.setToLoading();
    var user = await _auth.currentUser;
    return user;
  }
+
+
+  // downloadFile () async {
+  //  downloaded = await 
+
+  // }
+
 
 
 

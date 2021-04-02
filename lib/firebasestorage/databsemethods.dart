@@ -210,18 +210,27 @@ class DatabaseMethods {
     }).then((value) => print(value));
   }
 
-
+ int perPage = 10;
    getConvoMessage(String chatroomId) async {
     return await FirebaseFirestore.instance
         .collection("ChatRoom")
         .doc("KartikSoni_welcome")
         .collection("chats")
-        .orderBy("time", descending: true)
+        .orderBy("time", descending: true).limit(perPage)
         .snapshots();
-    // .then(
-    //     (QuerySnapshot querySnapshot) => querySnapshot.docs.forEach((doc) {
-    //           print((doc["message"]));
-    //         }));
+  }
+
+  getNextConvo (String chatroomId) async {
+
+    return await FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc("KartikSoni_welcome")
+        .collection("chats")
+        // .orderBy("time", descending: true).startAfter(values)
+        .limit(perPage)
+        .snapshots();
+
+
   }
 
   Future<void> savePhonenumber(phone) async {

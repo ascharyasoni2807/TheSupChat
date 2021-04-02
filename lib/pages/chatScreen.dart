@@ -14,7 +14,7 @@ import 'package:thegorgeousotp/repos/storage_repo.dart';
 import 'package:thegorgeousotp/theme.dart';
 import 'package:thegorgeousotp/widgets/cachedImage.dart';
 import 'package:thegorgeousotp/widgets/cirindi.dart';
-import 'package:thegorgeousotp/widgets/gradientbar.dart';
+import 'package:thegorgeousotp/pages/previewImage.dart';
 
 class ChatScreen extends StatefulWidget {
   final server;
@@ -23,7 +23,7 @@ class ChatScreen extends StatefulWidget {
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
-
+ScrollController _controller = ScrollController();
 Stream chatMessageStream;
 var server;
 var contact;
@@ -60,7 +60,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   showFilePicker(FileType fileType) async {
-    CircularIndi();
     File file = await FilePicker.getFile(type: fileType );
     print(fileType);
     Navigator.pop(context);
@@ -71,7 +70,6 @@ class _ChatScreenState extends State<ChatScreen> {
     sendImage(url, fileType);
     print(file.path);
     
-    GradientSnackBar.showMessage(context, "sending completed");
     // GradientSnackBar.showMessage(context, 'Sending attachment..');
   }
 
@@ -101,22 +99,29 @@ class _ChatScreenState extends State<ChatScreen> {
       messagetext.text = '';
     }
   }
-
+  
+  
+  FocusNode focusNode = FocusNode();
   Widget textInput() {
     return TextField(
+    // readOnly: true,
+      autofocus: false,
       style: TextStyle(fontSize: 19, color: Colors.white),
       maxLines: null,
       controller: messagetext,
-      onTap: () {},
+      onTap: () {
+      
+      },
       decoration: InputDecoration(
           prefixIcon: IconButton(
             icon: Icon(
               Icons.add,
               color: Colors.white,
             ),
-            onPressed: () {
+            onPressed: ()async {
               print("add button");
-              showAttachmentBottomSheet(context);
+              // focusNode: focusNode.unfocus();
+             await showAttachmentBottomSheet(context);
               // GradientSnackBar.showError(context, "Hello");
             },
           ),
@@ -135,29 +140,66 @@ class _ChatScreenState extends State<ChatScreen> {
           border: InputBorder.none),
     );
   }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    DatabaseMethods().getConvoMessage("KartikSoni_welcome").then((value) {
+ Query q;
+  QuerySnapshot querySnapshot;
+DocumentSnapshot lastdocument;
+  getMessages() async {
+     DatabaseMethods().getConvoMessage("KartikSoni_welcome").then((value) async {
       print(value);
       print('heelo init');
       print(widget.server);
       print(widget.contact);
-
+    
+      print("ashdashdhda"+lastdocument.toString());
       setState(() {
+        // q= value;
         chatMessageStream = value;
         server = widget.server;
         contact = widget.contact;
         otherUid = server["uid"];
+
       });
+      // print(q);
+      // querySnapshot = await q.get();
+      // lastdocument = querySnapshot.docs[querySnapshot.docs.length-1];
+  
       print(server);
       print(contact);
     });
-
-    super.initState();
   }
 
+  getNextMessages() async  {
+
+
+
+  } 
+  
+
+  @override
+  void initState() {
+    // TODO: implement initState
+      
+   super.initState();
+   getMessages();
+
+     _controller.addListener(() {
+     double maxScroll = _controller.position.maxScrollExtent;
+      double currentScroll = _controller.position.pixels;
+      double delta = MediaQuery.of(context).size.height * 0.20;
+      if (maxScroll - currentScroll <= delta) {
+        print("upar");
+      }
+
+  });
+  
+ 
+  }
+
+// @override
+//   void dispose() {
+//     // TODO: implement dispose
+//     super.dispose();
+//   }
   @override
   Widget build(BuildContext context) {
     _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
@@ -195,7 +237,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           child: SizedBox(
                               height: 20,
                               width: 20,
-                              child: Image.network(server["profilePicture"])))),
+                              child: CachedNetworkImage(imageUrl: server["profilePicture"])
+                              ))),
                 ),
                 const SizedBox(
                   width: 12,
@@ -253,10 +296,13 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
            _imageUploadProvider.getViewState == ViewState.Loading
                       ? Container(
+
                         alignment: Alignment.bottomRight,
                         margin: EdgeInsets.only(right:15),
-                        child: CircularProgressIndicator())
-                      : Container(),
+                        child: CustomprogressIndicator()
+                        //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                       ) :Container(),
+                        
           // ignore: prefer_const_constructors
           Container(
             decoration: BoxDecoration(
@@ -294,21 +340,30 @@ class TileMessage extends StatelessWidget {
     final formattedDate = DateFormat.yMMMd().add_jm().format(date);
 
     return type!=null && type == "FileType.IMAGE" ? 
-    
-    Container(
-     
-      padding: EdgeInsets.symmetric(horizontal:5),
-       margin: isSendByMe? const EdgeInsets.only(top: 12,left: 110):const EdgeInsets.only(top: 12,right: 110),
-      //  height: 210,
-      //  width: 200,
-      alignment: isSendByMe? Alignment.centerRight : Alignment.centerLeft,
-      child: Column(
-        children: [
-          CachedImage(imageUrl:imageUrl),
-          Text(formattedDate,
-                textAlign: isSendByMe ? TextAlign.end : TextAlign.left,
-                style: const TextStyle(color: Colors.black, fontSize: 10))
-        ],
+    GestureDetector(
+      onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewPage(imageUrl:imageUrl)));
+      },
+          child: Container(
+       
+        padding: EdgeInsets.symmetric(horizontal:5),
+         margin: isSendByMe? const EdgeInsets.only(top: 5,bottom:5 ,left: 110):const EdgeInsets.only(top: 5,bottom:5 ,right: 110),
+        //  height: 210,
+        //  width: 200,
+        alignment: isSendByMe? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: isSendByMe? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            CachedImage(imageUrl:imageUrl),
+            Padding(
+              padding: isSendByMe? const EdgeInsets.only(right: 5):const EdgeInsets.only(left:5),
+              child: Text(formattedDate,
+              
+                    textAlign: isSendByMe ? TextAlign.end : TextAlign.left,
+                    style: const TextStyle(color: Colors.black, fontSize: 10)),
+            )
+          ],
+        ),
       ),
     )
     
@@ -354,10 +409,10 @@ class TileMessage extends StatelessWidget {
                     color: Colors.white, letterSpacing: 0, fontSize: 16),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(formattedDate,
                 textAlign: isSendByMe ? TextAlign.end : TextAlign.left,
-                style: const TextStyle(color: Colors.white, fontSize: 8))
+                style: const TextStyle(color: Colors.white, fontSize: 9))
           ],
         ),
       ),
@@ -365,7 +420,7 @@ class TileMessage extends StatelessWidget {
   }
 }
 
-ScrollController _controller = ScrollController();
+
 
 class ChatMessageList extends StatelessWidget {
   @override
@@ -377,7 +432,7 @@ class ChatMessageList extends StatelessWidget {
           print(snapshot.data);
           print('inside ot');
           if (snapshot.data == null)
-            return const Center(child: CircularProgressIndicator());
+            return  Center(child: CustomprogressIndicator());
 
           return ListView.builder(
               controller: _controller,

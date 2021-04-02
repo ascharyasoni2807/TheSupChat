@@ -141,7 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 progressIndicatorBuilder:
                                                     (context, url,
                                                             downloadProgress) =>
-                                                        CircularProgressIndicator(
+                                                        CircularProgressIndicator( strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                                             value:
                                                                 downloadProgress
                                                                     .progress),

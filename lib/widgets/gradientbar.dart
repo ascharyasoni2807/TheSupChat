@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:thegorgeousotp/theme.dart';
 
 
-class GradientSnackBar{
+class Gradient{
 
   static void showMessage(BuildContext context, String message){
     Flushbar(

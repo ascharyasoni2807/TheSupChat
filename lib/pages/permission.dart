@@ -15,6 +15,8 @@ final PermissionStatus permissionStatus = await _getPermission();
           Navigator.push(
               context, MaterialPageRoute(builder: (context) => ContactsPage()));
         } else {
+
+          var result = await Permission.contacts;
           //If permissions have been denied show standard cupertino alert dialog
           showDialog(
               context: context,
@@ -35,15 +37,17 @@ final PermissionStatus permissionStatus = await _getPermission();
 
  Future<PermissionStatus> _getPermission() async {
     final PermissionStatus permission = await Permission.contacts.status;
-    if (permission != PermissionStatus.granted &&
-        permission != PermissionStatus.denied) {
-      final Map<Permission, PermissionStatus> permissionStatus =
-          await [Permission.contacts].request();
-      return permissionStatus[Permission.contacts] ??
-          PermissionStatus.limited;
-    } else {
-      return permission;
-    }
+    final PermissionStatus permissions = await Permission.contacts.request(); 
+    return permissions;
+    // if (permission != PermissionStatus.granted &&
+    //     permission != PermissionStatus.denied) {
+    //   final Map<Permission, PermissionStatus> permissionStatus =
+    //       await [Permission.contacts].request();
+    //   return permissionStatus[Permission.contacts] ??
+    //       PermissionStatus.limited;
+    // } else {
+    //   return permission;
+    // }
   }
 
 

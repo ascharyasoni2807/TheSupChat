@@ -3,6 +3,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:thegorgeousotp/theme.dart';
 
 class CachedImage extends StatelessWidget {
   final String imageUrl;
@@ -18,7 +19,7 @@ CachedImage({this.imageUrl});
     height: 200.0,
      decoration: BoxDecoration(
         border: Border.all(
-                    color: const Color(0xff536162),
+                    color: MyColors.maincolor ,
                     width: 5,
                   ),
         image: DecorationImage(
@@ -30,7 +31,11 @@ CachedImage({this.imageUrl});
           bottomLeft: Radius.circular(10)
         ),),
   ),
-      placeholder: (context ,url) => Center(child: CircularProgressIndicator()),),
+      // ignore: prefer_const_constructors
+      placeholder: (context ,url) => Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),),
+      )),
     );
   }
 }

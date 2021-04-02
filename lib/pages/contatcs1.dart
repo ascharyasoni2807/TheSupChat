@@ -108,7 +108,7 @@ class _ContactsPageState extends State<ContactsPage> {
 
     // final contacts =  _contacts.toList();
     Map hashmap = Map();
-
+  
     contacts.forEach((element) {
       element.phones.forEach((_element) {
         hashmap[_element.value] = element;
@@ -128,16 +128,20 @@ class _ContactsPageState extends State<ContactsPage> {
             "serverData": value,
             "phoneData": hashmap[value['phoneNumber']]
           });
+         
+        
           print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
           print(value);
         }
       });
     });
-
+    //  print(  foundusers[0]["phoneData"].displayName);
     setState(() {
       isbuilding = true;
     });
   }
+ 
+
 
   Icon actionIcon = new Icon(Icons.search);
   Widget appBarTitle = new Text("Select Contact");
@@ -231,6 +235,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                                                           url,
                                                                           downloadProgress) =>
                                                                       CircularProgressIndicator(
+                                                              strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(MyColors.maincolor)  ,        
                                                                           value:
                                                                               downloadProgress.progress),
                                                                   errorWidget: (context,
@@ -273,12 +278,21 @@ class _ContactsPageState extends State<ContactsPage> {
                                   },
                                 )
                               : Center(
-                                  child: const CircularProgressIndicator()))
+                                  child: progressIndicator()))
                     ],
                   ),
                 )
-              : Center(child: const CircularProgressIndicator())
-          : Center(child: const CircularProgressIndicator()),
+              : Center(child: progressIndicator())
+          : Center(child:  progressIndicator()),
     );
+    
+  }
+  
+}
+
+class progressIndicator  extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),);
   }
 }
