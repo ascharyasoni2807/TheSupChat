@@ -11,6 +11,9 @@ import 'package:thegorgeousotp/theme.dart';
 class CustomprogressIndicator  extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),);
+    return Padding(
+      padding: const EdgeInsets.all(2.0),
+      child: CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),),
+    );
   }
 }

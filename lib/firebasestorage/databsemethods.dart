@@ -70,11 +70,31 @@ class DatabaseMethods {
     });
   }
 
+
+
+ 
+
+
   Future<void> createChatRoom(
       serveruid,serverPhone, selfchatRoomMap, secondchatRoomMap) async {
+
+      var user =_auth.currentUser;
+     var phoneNumber = user.phoneNumber.toString();
+
+    phoneNumber = phoneNumber.substring(phoneNumber.length - 10); 
+    if(serverPhone.contains("+")){
+        print("yesss");
+        serverPhone = serverPhone.substring(serverPhone.length - 10);
+        print(serverPhone);
+      }else {
+        serverPhone=serverPhone;
+        print(serverPhone);
+      } 
+
+
     final snapShot = await FirebaseFirestore.instance
         .collection('ChatRoom')
-        .doc(_auth.currentUser.phoneNumber)
+        .doc(phoneNumber)
         // .collection('Chats').where('chatroomId' , isEqualTo : serverPhone.toString())
         .get();
 
@@ -89,7 +109,7 @@ class DatabaseMethods {
       print("current user not exist krta hai");
       FirebaseFirestore.instance
           .collection("ChatRoom")
-          .doc(_auth.currentUser.phoneNumber)
+          .doc(phoneNumber)
           // .collection("Chats").doc(serverPhone.toString())
           .set({'uid':_auth.currentUser.uid})
           .catchError((e) {
@@ -97,7 +117,7 @@ class DatabaseMethods {
       }).then((value) {
         FirebaseFirestore.instance
             .collection("ChatRoom")
-            .doc(_auth.currentUser.phoneNumber)
+            .doc(phoneNumber)
             .collection("ListUsers")
             .doc(_auth.currentUser.uid.toString()+"_"+serveruid)
             .set(selfchatRoomMap);
@@ -139,7 +159,7 @@ class DatabaseMethods {
       print("current user exist already , to direct current user ka data ");
       FirebaseFirestore.instance
           .collection("ChatRoom")
-          .doc(_auth.currentUser.phoneNumber)
+          .doc(phoneNumber)
           .collection("ListUsers")
           .doc(_auth.currentUser.uid.toString()+"_"+serveruid)
           .set(selfchatRoomMap);
@@ -185,51 +205,111 @@ class DatabaseMethods {
 
   }
 
-   addConvMessage(String chatroomId, messageMap) {
-    FirebaseFirestore.instance
+   addConvMessage(otherphone, messageMap ,serveruid,othermessageMap ) async {
+     var user =_auth.currentUser;
+var phoneNumber = user.phoneNumber.toString();
+
+    phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
+  
+    print("ppppppppppppppppppppppppppppppp" + phoneNumber);
+
+  FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(chatroomId)
-        .collection("chats")
+        .doc(phoneNumber)
+        .collection("ListUsers").doc((_auth.currentUser.uid.toString()+"_"+serveruid)).collection("Chats")
         .add(messageMap)
         .catchError((e) {
       print(e.toString());
-    }).then((value) => print(value));
+    }).then((value) async {
+      print(value);
+      print(otherphone);
+      if(otherphone.contains("+")){
+        print("yesss");
+        otherphone = otherphone.substring(otherphone.length - 10);
+        print(otherphone);
+      }else {
+        otherphone=otherphone;
+        print(otherphone);
+      }
+    await   FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(otherphone)
+        .collection("ListUsers").doc((serveruid+"_"+_auth.currentUser.uid.toString())).collection("Chats")
+        .add(messageMap).catchError((onError){
+          print(onError);
+        });
+
+    });
   }
 
 
-   addImageConvMessage(String chatroomId, messageMap ) {
+   addImageConvMessage(otherPhone, messageMap ,serveruid ,othermessageMap) {
     // ImageUploadProvider _imageUploadProvider;
-    
+    print(_auth.currentUser.phoneNumber);
+        var user =_auth.currentUser;
+var phoneNumber = user.phoneNumber.toString();
+
+    phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
     FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(chatroomId)
-        .collection("chats")
+        .doc(phoneNumber)
+        .collection("ListUsers").doc((_auth.currentUser.uid.toString()+'_'+serveruid)).collection("Chats")
         .add(messageMap)
         .catchError((e) {
       print(e.toString());
-    }).then((value) => print(value));
+    }).then((value){
+        if(otherPhone.contains("+")){
+        print("yesss");
+        otherPhone = otherPhone.substring(otherPhone.length - 10);
+        print(otherPhone);
+      }else {
+        otherPhone=otherPhone;
+        print(otherPhone);
+      }
+
+       FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(otherPhone)
+        .collection("ListUsers").doc((serveruid+"_"+_auth.currentUser.uid.toString())).collection("Chats")
+        .add(messageMap);
+
+    });
   }
 
  int perPage = 10;
-   getConvoMessage(String chatroomId) async {
+   getConvoMessage(serveruid) async {
+      var user =_auth.currentUser;
+var phoneNumber = user.phoneNumber.toString();
+
+    phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
+
     return await FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc("KartikSoni_welcome")
-        .collection("chats")
+        .doc(phoneNumber)
+        .collection("ListUsers").doc((_auth.currentUser.uid.toString()+'_'+serveruid)).collection("Chats")
         .orderBy("time", descending: true).limit(perPage)
         .snapshots();
   }
 
+
+
   getNextConvo (String chatroomId) async {
 
-    return await FirebaseFirestore.instance
-        .collection("ChatRoom")
-        .doc("KartikSoni_welcome")
-        .collection("chats")
-        // .orderBy("time", descending: true).startAfter(values)
-        .limit(perPage)
-        .snapshots();
+    // return await FirebaseFirestore.instance
+    //       .collection("ChatRoom")
+    //     .doc(_auth.currentUser.phoneNumber)
+    //     .collection("ListUsers").doc((_auth.currentUser.uid.toString()+'_'+serveruid)).collection("Chats")
+    //     .orderBy("time", descending: true).limit(perPage)
+    //     .snapshots();
 
+
+  }
+
+  getHomeUsers() async {
+       return  await FirebaseFirestore.instance
+        .collection("ChatRoom").doc(_auth.currentUser.phoneNumber.toString()).collection("ListUsers")
+        .orderBy("time")
+        .snapshots();
 
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:thegorgeousotp/theme.dart';
+import 'package:thegorgeousotp/widgets/cirindi.dart';
 
 class LoaderHUD extends StatelessWidget {
   final bool inAsyncCall;
@@ -12,7 +13,7 @@ class LoaderHUD extends StatelessWidget {
     //   borderRadius: const BorderRadius.all(Radius.circular(8)),
     //   color: MyColors.maincolor.withOpacity(0.7),
     // ),
-    child: const Center(child: CircularProgressIndicator(backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white) , )),
+    child: Center(child: CustomprogressIndicator()),
   );
   final bool dismissible;
   final Widget child;
@@ -35,10 +36,10 @@ class LoaderHUD extends StatelessWidget {
     return Stack(
       children: [
         child,
-        Opacity(
-          child: ModalBarrier(dismissible: dismissible, color: color),
-          opacity: opacity,
-        ),
+        // Opacity(
+        //   child: ModalBarrier(dismissible: dismissible, color: color),
+        //   opacity: opacity,
+        // ),
         Center(child: progressIndicator),
       ],
     );

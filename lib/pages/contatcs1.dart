@@ -51,12 +51,16 @@ class _ContactsPageState extends State<ContactsPage> {
     print(users);
     Map<String, dynamic> selfchatRoomMap = {
       "users": users,
-      "chatroomId": server["phoneNumberWithCountry"].toString()
+      "chatroomId": server["phoneNumberWithCountry"].toString(),
+      "time" : DateTime.now().millisecondsSinceEpoch,
+      "otherUserProfile" : server["profilePicture"].toString(),
     };
     print(users.reversed.toList());
     Map<String, dynamic> secondchatRoomMap = {
       "users": users.reversed.toList(),
-      "chatroomId": currentUid.phoneNumber.toString()
+      "chatroomId": currentUid.phoneNumber.toString(),
+      "time" : DateTime.now().millisecondsSinceEpoch,
+      "otherUserProfile" : server["profilePicture"].toString()
     };
     DatabaseMethods()
         .createChatRoom(
@@ -111,9 +115,9 @@ class _ContactsPageState extends State<ContactsPage> {
   
     contacts.forEach((element) {
       element.phones.forEach((_element) {
-        hashmap[_element.value] = element;
+        hashmap[_element.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")] = element;
       });
-      phonenumber.addAll(element.phones.map((e) => e.value));
+      phonenumber.addAll(element.phones.map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
     });
     await FirebaseFirestore.instance
         .collection("users")
@@ -262,8 +266,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                                 ),
                                                 subtitle: Text(
                                                   contact.phones.length != 0
-                                                      ? contact
-                                                          .phones.first.value
+                                                      ? serverData["phoneNumber"]
                                                       : '',
                                                   style: TextStyle(
                                                     fontSize: 14,

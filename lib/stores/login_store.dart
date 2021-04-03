@@ -41,15 +41,15 @@ abstract class LoginStoreBase with Store {
       return false;
     }
   }
-Candidate _userFromFirebaseUser(User user) {
-  print(user.phoneNumber);
-    return user != null
-        ? Candidate(
-            uid: user.uid,
-            phoneNumber: user.phoneNumber
-          )
-        : null;
-  }
+// Candidate _userFromFirebaseUser(User user) {
+//   print(user.phoneNumber);
+//     return user != null
+//         ? Candidate(
+//             uid: user.uid,
+//             phoneNumber: user.phoneNumber
+//           )
+//         : null;
+//   }
   @action
   Future<void> getCodeWithPhoneNumber(BuildContext context, String phoneNumber) async {
     isLoginLoading = true;
@@ -129,7 +129,7 @@ Candidate _userFromFirebaseUser(User user) {
 
     firebaseUser = result.user;
 
-        final snapShot = await FirebaseFirestore.instance
+       try { final snapShot = await FirebaseFirestore.instance
       .collection('users')
       .doc(result.user.uid)
       .get();
@@ -142,9 +142,11 @@ Candidate _userFromFirebaseUser(User user) {
     }else {
         print("hurrrrrrrrrrrrrrrrrayyyy  your  already exist there   ");
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) =>  HomePage()), (Route<dynamic> route) => false);
+    }}catch(e) {
+      print(e);
     }
   
-         _userFromFirebaseUser(result.user);
+        //  _userFromFirebaseUser(result.user);
 
          
        

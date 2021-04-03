@@ -2,13 +2,16 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
 import 'package:thegorgeousotp/pages/bottomsheet.dart';
+import 'package:thegorgeousotp/repos/candidate.dart';
 import 'package:thegorgeousotp/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thegorgeousotp/pages/home_page.dart';
@@ -52,11 +55,31 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
       });
     });
   }
+  permission() async {
+
+
+    final PermissionStatus permission = await Permission.storage.status;
+    final PermissionStatus permissions = await Permission.storage.request(); 
+   
+    if (permission != PermissionStatus.granted &&
+        permission != PermissionStatus.denied) {
+      final Map<Permission, PermissionStatus> permissionStatus =
+          await [Permission.storage].request();
+      return permissionStatus[Permission.storage] ??
+          PermissionStatus.limited;
+    } else {
+      return permission;
+    }
+  
+
+  }
 
   @override
   void initState() {
     super.initState();
     getPhoto();
+     permission();
+     Candidate().getContacts();
     mapping(widget.user);
   }
 
@@ -295,6 +318,8 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
 
     phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
     print("ppppppppppppppppppppppppppppppp" + phoneNumber);
+   final now = DateTime.now();
+  String formatter = DateFormat('yMd').add_jm().format(now);
 
     Map<String, dynamic> userInfoMap = {
       "uid": user.uid,
@@ -302,6 +327,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
       "phoneNumber": phoneNumber,
       "newuser": true.toString(),
       "createdON": DateTime.now().millisecondsSinceEpoch,
+      "DateCreated" : formatter,
       "name": null,
       "profilePicture":
           "https://cdn.business2community.com/wp-content/uploads/2017/08/blank-profile-picture-973460_640.png"

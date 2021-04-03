@@ -39,15 +39,15 @@ final PermissionStatus permissionStatus = await _getPermission();
     final PermissionStatus permission = await Permission.contacts.status;
     final PermissionStatus permissions = await Permission.contacts.request(); 
     return permissions;
-    // if (permission != PermissionStatus.granted &&
-    //     permission != PermissionStatus.denied) {
-    //   final Map<Permission, PermissionStatus> permissionStatus =
-    //       await [Permission.contacts].request();
-    //   return permissionStatus[Permission.contacts] ??
-    //       PermissionStatus.limited;
-    // } else {
-    //   return permission;
-    // }
+    if (permission != PermissionStatus.granted &&
+        permission != PermissionStatus.denied) {
+      final Map<Permission, PermissionStatus> permissionStatus =
+          await [Permission.contacts].request();
+      return permissionStatus[Permission.contacts] ??
+          PermissionStatus.limited;
+    } else {
+      return permission;
+    }
   }
 
 

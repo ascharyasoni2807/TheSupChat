@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:thegorgeousotp/pages/home_page.dart';
 import 'package:thegorgeousotp/pages/login_page.dart';
+import 'package:thegorgeousotp/repos/candidate.dart';
 import 'package:thegorgeousotp/stores/login_store.dart';
 import 'package:thegorgeousotp/theme.dart';
 
@@ -14,64 +15,55 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
- 
-
-
-
-
-
-
   @override
   void initState() {
     super.initState();
-    
-     Future.delayed(
-      Duration(seconds: 1),
-      () {
- Provider.of<LoginStore>(context, listen: false).isAlreadyAuthenticated().then((result) {
-      if (result) {
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const HomePage()), (Route<dynamic> route) => false);
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginPage()), (Route<dynamic> route) => false);
-      }
-    });
 
+    Future.delayed(Duration(seconds: 1), () {
+      Provider.of<LoginStore>(context, listen: false)
+          .isAlreadyAuthenticated()
+          .then((result) {
+        if (result) {
+          Candidate().getContacts();
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const HomePage()),
+              (Route<dynamic> route) => false);
+        } else {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginPage()),
+              (Route<dynamic> route) => false);
+             
+        }
       });
-
-   
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       // backgroundColor: MyColors.maincolor,
       body: Container(
         // color:MyColors.maincolor,
         child: Column(
-          
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
- children: [
-    Center( child: Container(
-                                          height: 100,
-                                          // width: 500,
-                                         child: Center(
-                                           child: Text("TheSupChat",
-                                           style:  GoogleFonts.redressed(
-                                                textStyle: TextStyle(
-                                color: MyColors.maincolor,
-                                letterSpacing: 3,
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold)
-                                           )
-                                           )
-                                           )   ),
-                                      ),
- ],
+          children: [
+            Center(
+              child: Container(
+                  height: 100,
+                  // width: 500,
+                  child: Center(
+                      child: Text("TheSupChat",
+                          style: GoogleFonts.redressed(
+                              textStyle: TextStyle(
+                                  color: MyColors.maincolor,
+                                  letterSpacing: 3,
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold))))),
+            ),
+          ],
         ),
       ),
-
     );
   }
 }

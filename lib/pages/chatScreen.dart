@@ -1,11 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:thegorgeousotp/enum/view_state.dart';
 import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
@@ -15,6 +20,7 @@ import 'package:thegorgeousotp/theme.dart';
 import 'package:thegorgeousotp/widgets/cachedImage.dart';
 import 'package:thegorgeousotp/widgets/cirindi.dart';
 import 'package:thegorgeousotp/pages/previewImage.dart';
+import 'package:http/http.dart'as http;
 
 class ChatScreen extends StatefulWidget {
   final server;
@@ -28,10 +34,13 @@ Stream chatMessageStream;
 var server;
 var contact;
 var otherUid;
+var selfUid;
 TextEditingController messagetext = new TextEditingController();
 
 class _ChatScreenState extends State<ChatScreen> {
   ImageUploadProvider _imageUploadProvider;
+final FirebaseAuth _auth = FirebaseAuth.instance;
+
 
   showAttachmentBottomSheet(context) {
     showModalBottomSheet(
@@ -76,29 +85,46 @@ class _ChatScreenState extends State<ChatScreen> {
   sendImage(url, fileType) async {
     Map<String, dynamic> imagedetailMap = {
       "imageUrl": url.toString(),
-      "sendBy": "KartikSoni",
+      "sendBy":  selfUid,
       "message": "Image is  here",
       "time": DateTime.now().millisecondsSinceEpoch,
       "type": fileType.toString()
     };
+      Map<String, dynamic> othermessageMap =  {
+        "message": messagetext.text,
+        "sendBy": otherUid,
+        "time": DateTime.now().millisecondsSinceEpoch,
+        "type": "text"
+      };
     await DatabaseMethods()
-        .addImageConvMessage("KartikSoni_welcome", imagedetailMap, );
+        .addImageConvMessage(server["phoneNumber"], imagedetailMap,server["uid"],othermessageMap);
     // GradientSnackBar.showError(context,"Image sent");
     print("Dedoneee");
   }
 
   sendMessage() async {
-    if (messagetext.text.isNotEmpty) {
+    if (messagetext.text.isNotEmpty && messagetext.text.trim().isNotEmpty) {
       Map<String, dynamic> messageMap = {
         "message": messagetext.text,
-        "sendBy": "KartikSoni",
+        "sendBy": selfUid,
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
-      await DatabaseMethods().addConvMessage("KartikSoni_welcome", messageMap);
+       Map<String, dynamic> othermessageMap =  {
+        "message": messagetext.text,
+        "sendBy": otherUid,
+        "time": DateTime.now().millisecondsSinceEpoch,
+        "type": "text"
+      };
+      await DatabaseMethods().addConvMessage(server["phoneNumber"], messageMap,server["uid"],othermessageMap);
       messagetext.text = '';
     }
+    else {
+      print("please type something");
+    }
   }
+  
+ 
   
   
   FocusNode focusNode = FocusNode();
@@ -109,9 +135,9 @@ class _ChatScreenState extends State<ChatScreen> {
       style: TextStyle(fontSize: 19, color: Colors.white),
       maxLines: null,
       controller: messagetext,
-      onTap: () {
+      // onTap: () {
       
-      },
+      // },
       decoration: InputDecoration(
           prefixIcon: IconButton(
             icon: Icon(
@@ -144,19 +170,22 @@ class _ChatScreenState extends State<ChatScreen> {
   QuerySnapshot querySnapshot;
 DocumentSnapshot lastdocument;
   getMessages() async {
-     DatabaseMethods().getConvoMessage("KartikSoni_welcome").then((value) async {
-      print(value);
+   await  DatabaseMethods().getConvoMessage(otherUid).then((value) async {
+    
       print('heelo init');
       print(widget.server);
       print(widget.contact);
-    
-      print("ashdashdhda"+lastdocument.toString());
+    //  final  Map values = value.value;
+      
       setState(() {
         // q= value;
         chatMessageStream = value;
-        server = widget.server;
-        contact = widget.contact;
-        otherUid = server["uid"];
+        // server = widget.server;
+        print("ojojoajaos");
+        // contact = widget.contact;
+        // otherUid = server["uid"];
+        // selfUid = _auth.currentUser.uid;
+        // isLoading= false;
 
       });
       // print(q);
@@ -173,13 +202,16 @@ DocumentSnapshot lastdocument;
 
 
   } 
-  
+  bool isLoading = true;
 
   @override
   void initState() {
     // TODO: implement initState
       
-   super.initState();
+    server = widget.server;
+        contact = widget.contact;
+        otherUid = server["uid"];
+        selfUid = _auth.currentUser.uid;
    getMessages();
 
      _controller.addListener(() {
@@ -189,7 +221,7 @@ DocumentSnapshot lastdocument;
       if (maxScroll - currentScroll <= delta) {
         print("upar");
       }
-
+     super.initState();
   });
   
  
@@ -237,7 +269,7 @@ DocumentSnapshot lastdocument;
                           child: SizedBox(
                               height: 20,
                               width: 20,
-                              child: CachedNetworkImage(imageUrl: server["profilePicture"])
+                              child: CachedNetworkImage(imageUrl:server["profilePicture"] )
                               ))),
                 ),
                 const SizedBox(
@@ -332,6 +364,29 @@ class TileMessage extends StatelessWidget {
   final imageUrl;
   TileMessage(this.type,this.message, this.isSendByMe, this.timing ,this.imageUrl);
 
+ bool isDownloading = false;
+
+downloadImage(imgUrl) async {
+  isDownloading = true;
+    var now = new DateTime.now();
+    var formatter = new DateFormat('yyyy-MM-dd');
+    String formattedDate = formatter.format(now);
+    print(formattedDate);
+    bool downloaded = await StorageRepo().saveFile(
+        imgUrl,
+        
+        formattedDate);
+        var a = DateFormat.jm().format(DateTime.now());
+        print(a);
+     
+    if (downloaded) {
+      print("File Downloaded");
+    } else {
+      print("Problem Downloading File");
+    }
+  isDownloading = false;
+  }
+
   @override
   Widget build(BuildContext context) {
     // DateTime myDateTime = timing.toDate();
@@ -342,6 +397,7 @@ class TileMessage extends StatelessWidget {
     return type!=null && type == "FileType.IMAGE" ? 
     GestureDetector(
       onTap: () {
+        
           Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewPage(imageUrl:imageUrl)));
       },
           child: Container(
@@ -355,13 +411,22 @@ class TileMessage extends StatelessWidget {
           crossAxisAlignment: isSendByMe? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             CachedImage(imageUrl:imageUrl),
+            // ignore: prefer_const_constructors
+            // ignore: deprecated_member_use
+            !isSendByMe ? RaisedButton (
+              // color: MyColors.buttoncolor,
+              onPressed: () { 
+               
+                downloadImage(imageUrl); },
+                
+            child: Icon( Icons.file_download ,)): Container(),
             Padding(
               padding: isSendByMe? const EdgeInsets.only(right: 5):const EdgeInsets.only(left:5),
               child: Text(formattedDate,
-              
                     textAlign: isSendByMe ? TextAlign.end : TextAlign.left,
                     style: const TextStyle(color: Colors.black, fontSize: 10)),
-            )
+            ),
+
           ],
         ),
       ),
@@ -444,7 +509,7 @@ class ChatMessageList extends StatelessWidget {
                 return TileMessage(
                   snapshot.data.docs[index].data()["type"],
                     snapshot.data.docs[index].data()["message"],
-                    snapshot.data.docs[index].data()["sendBy"] == "KartikSoni",
+                    snapshot.data.docs[index].data()["sendBy"] == selfUid,
                     (snapshot.data.docs[index].data()["time"]),
                     snapshot.data.docs[index].data()["imageUrl"]
                     );
@@ -452,3 +517,4 @@ class ChatMessageList extends StatelessWidget {
         });
   }
 }
+
