@@ -1,7 +1,7 @@
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/theme.dart';
 
 
 class Gradient{

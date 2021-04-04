@@ -5,18 +5,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/pages/contatcs1.dart';
-import 'package:thegorgeousotp/pages/profilepage.dart';
-import 'package:thegorgeousotp/repos/candidate.dart';
-import 'package:thegorgeousotp/stores/login_store.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+// import 'package:theproject/pages/contatcs1.dart';
+import 'package:theproject/pages/profilepage.dart';
+// import 'package:theproject/repos/candidate.dart';
+import 'package:theproject/stores/login_store.dart';
+import 'package:theproject/theme.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:thegorgeousotp/widgets/cirindi.dart';
+import 'package:theproject/widgets/cirindi.dart';
 import '../theme.dart';
-import "package:thegorgeousotp/pages/permission.dart";
+import "package:theproject/pages/permission.dart";
 
 class HomePage extends StatefulWidget {
   const HomePage({Key key}) : super(key: key);
@@ -45,13 +46,19 @@ class _HomePageState extends State<HomePage> {
   //     });
   //   });
   // }
-
+  // 
+  
+  
   @override
   void initState() {
     // TODO: implement initState
     //  getContacts();
-    getContacts();
+    // ContactPermission().permissioncheck(context);
     getUserInfo();
+    getContacts();
+    
+
+    
     // getContacts();
     super.initState();
   }
@@ -60,6 +67,8 @@ class _HomePageState extends State<HomePage> {
   final phonenumber = [];
 
   getContacts() async {
+
+
     final Iterable<Contact> contacts = await ContactsService.getContacts(
       withThumbnails: false,
     );
@@ -128,7 +137,11 @@ var phoneNumber = user.phoneNumber.toString();
       
     // });
   }
-
+ @override
+ void dispose() { 
+   
+   super.dispose();
+ }
   Widget chatRoomList() {
     return foundusers != null
         ? !isbuilding
@@ -206,7 +219,7 @@ var phoneNumber = user.phoneNumber.toString();
                           // loginStore.signOut(context);
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
+                              CupertinoPageRoute(
                                   builder: (context) => ProfilePage()));
                           print("profile");
                         }))
@@ -277,11 +290,6 @@ class Chatroomtile extends StatelessWidget {
                                 errorWidget: (context, url, error) =>
                                     Icon(Icons.error),
                               )
-
-                            //  Image.network(
-                            //  userPhotos,
-                            //   fit: BoxFit.fill,
-                            // )
                             : Image.asset('assets/img/pp.png')),
                   ),
                 ),

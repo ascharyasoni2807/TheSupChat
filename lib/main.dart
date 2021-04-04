@@ -1,11 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/pages/profilepage.dart';
-import 'package:thegorgeousotp/pages/splash_page.dart';
-import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
-import 'package:thegorgeousotp/stores/login_store.dart';
-import 'package:thegorgeousotp/stores/profileStore.dart';
+import 'package:theproject/pages/profilepage.dart';
+import 'package:theproject/pages/splash_page.dart';
+import 'package:theproject/providers/imageuploadprovider.dart';
+import 'package:theproject/stores/login_store.dart';
+import 'package:theproject/stores/profileStore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

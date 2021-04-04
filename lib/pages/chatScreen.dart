@@ -12,14 +12,14 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/enum/view_state.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
-import 'package:thegorgeousotp/repos/storage_repo.dart';
-import 'package:thegorgeousotp/theme.dart';
-import 'package:thegorgeousotp/widgets/cachedImage.dart';
-import 'package:thegorgeousotp/widgets/cirindi.dart';
-import 'package:thegorgeousotp/pages/previewImage.dart';
+import 'package:theproject/enum/view_state.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/providers/imageuploadprovider.dart';
+import 'package:theproject/repos/storage_repo.dart';
+import 'package:theproject/theme.dart';
+import 'package:theproject/widgets/cachedImage.dart';
+import 'package:theproject/widgets/cirindi.dart';
+import 'package:theproject/pages/previewImage.dart';
 import 'package:http/http.dart'as http;
 
 class ChatScreen extends StatefulWidget {
@@ -52,15 +52,15 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
                 ListTile(
                     leading: Icon(Icons.image),
                     title: Text('Image'),
-                    onTap: () => showFilePicker(FileType.IMAGE)),
+                    onTap: () => showFilePicker(FileType.image)),
                 ListTile(
                     leading: Icon(Icons.videocam),
                     title: Text('Video'),
-                    onTap: () => showFilePicker(FileType.VIDEO)),
+                    onTap: () => showFilePicker(FileType.video)),
                 ListTile(
                   leading: Icon(Icons.insert_drive_file),
                   title: Text('File'),
-                  onTap: () => showFilePicker(FileType.ANY),
+                  onTap: () => showFilePicker(FileType.any),
                 ),
               ],
             ),
@@ -69,7 +69,7 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
   }
 
   showFilePicker(FileType fileType) async {
-    File file = await FilePicker.getFile(type: fileType );
+    FilePickerResult file = await FilePicker.platform.pickFiles(type: fileType );
     print(fileType);
     Navigator.pop(context);
     String url = await StorageRepo().uploadChatPic(file, otherUid, _imageUploadProvider);
@@ -77,7 +77,7 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
     
     // chatBloc.dispatch(SendAttachmentEvent(chat.chatId,file,fileType));
     sendImage(url, fileType);
-    print(file.path);
+    print(file.paths);
     
     // GradientSnackBar.showMessage(context, 'Sending attachment..');
   }

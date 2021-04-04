@@ -1,8 +1,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/theme.dart';
 
 class BottomSheetExample extends StatelessWidget {
 

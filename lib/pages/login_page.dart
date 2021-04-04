@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/stores/login_store.dart';
-import 'package:thegorgeousotp/theme.dart';
-import 'package:thegorgeousotp/widgets/loader_hud.dart';
+import 'package:theproject/pages/permission.dart';
+import 'package:theproject/stores/login_store.dart';
+import 'package:theproject/theme.dart';
+import 'package:theproject/widgets/loader_hud.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key key}) : super(key: key);
@@ -128,8 +129,9 @@ class _LoginPageState extends State<LoginPage> {
                                   maxWidth: 500
                               ),
                               child: RaisedButton(
-                                onPressed: () {
+                                onPressed: () async{
                                   if (phoneController.text.isNotEmpty) {
+                                   await ContactPermission().permissioncheck2(context);
                                     loginStore.getCodeWithPhoneNumber(context, phoneController.text.toString());
                                   } else {
                                     loginStore.loginScaffoldKey.currentState.showSnackBar(SnackBar(

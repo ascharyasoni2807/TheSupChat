@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:thegorgeousotp/theme.dart';
-import 'package:thegorgeousotp/widgets/cirindi.dart';
+import 'package:theproject/theme.dart';
+import 'package:theproject/widgets/cirindi.dart';
 
 class LoaderHUD extends StatelessWidget {
   final bool inAsyncCall;

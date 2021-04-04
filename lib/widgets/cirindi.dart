@@ -1,7 +1,7 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/theme.dart';
 
 
 

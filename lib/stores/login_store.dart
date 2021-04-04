@@ -2,13 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/pages/home_page.dart';
-import 'package:thegorgeousotp/pages/login_page.dart';
-import 'package:thegorgeousotp/pages/onboardprofile.dart';
-import 'package:thegorgeousotp/pages/otp_page.dart';
-import 'package:thegorgeousotp/pages/profilepage.dart';
-import 'package:thegorgeousotp/repos/candidate.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/pages/home_page.dart';
+import 'package:theproject/pages/login_page.dart';
+import 'package:theproject/pages/onboardprofile.dart';
+import 'package:theproject/pages/otp_page.dart';
+import 'package:theproject/pages/profilepage.dart';
+// import 'package:theproject/repos/candidate.dart';
 
 part 'login_store.g.dart';
 

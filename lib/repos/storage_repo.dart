@@ -2,18 +2,20 @@ import 'dart:io';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/providers/imageuploadprovider.dart';
-import 'package:thegorgeousotp/repos/candidate.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/providers/imageuploadprovider.dart';
+// import 'package:theproject/repos/candidate.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:thegorgeousotp/widgets/gradientbar.dart';
+import 'package:theproject/widgets/gradientbar.dart';
 import 'package:image/image.dart' as Im; 
 
 class StorageRepo{
@@ -59,7 +61,7 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
 
 
 
-Future uploadChatPic(File file , otherUid, ImageUploadProvider _imageUploadProvider) async {
+Future uploadChatPic(FilePickerResult file , otherUid, ImageUploadProvider _imageUploadProvider) async {
 var user = await _auth.currentUser;
 var imageurl;
 

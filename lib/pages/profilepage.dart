@@ -7,13 +7,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/pages/bottomsheet.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/pages/bottomsheet.dart';
+import 'package:theproject/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:thegorgeousotp/pages/home_page.dart';
-import 'package:thegorgeousotp/repos/storage_repo.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/pages/home_page.dart';
+import 'package:theproject/repos/storage_repo.dart';
+import 'package:theproject/theme.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ProfilePage extends StatefulWidget {

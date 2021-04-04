@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:numeric_keyboard/numeric_keyboard.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/stores/login_store.dart';
-import 'package:thegorgeousotp/theme.dart';
-import 'package:thegorgeousotp/widgets/loader_hud.dart';
+import 'package:theproject/pages/permission.dart';
+import 'package:theproject/stores/login_store.dart';
+import 'package:theproject/theme.dart';
+import 'package:theproject/widgets/loader_hud.dart';
 
 class OtpPage extends StatefulWidget {
   const OtpPage({Key key}) : super(key: key);

@@ -2,7 +2,7 @@
 
 
  import 'package:flutter/cupertino.dart';
-import 'package:thegorgeousotp/enum/view_state.dart';
+import 'package:theproject/enum/view_state.dart';
 
 class ImageUploadProvider with ChangeNotifier {
 

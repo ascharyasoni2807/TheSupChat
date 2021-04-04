@@ -2,10 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/pages/chatScreen.dart';
-import 'package:thegorgeousotp/theme.dart';
-import 'package:thegorgeousotp/repos/storage_repo.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/pages/chatScreen.dart';
+import 'package:theproject/theme.dart';
+import 'package:theproject/repos/storage_repo.dart';
 
 class ContactsPage extends StatefulWidget {
   @override
@@ -75,35 +75,6 @@ class _ContactsPageState extends State<ContactsPage> {
     });
     print("inserver");
   }
-  // filterContacts() {
-  //   List<Contact> _contacts = [];
-  //   _contacts.addAll(contacts);
-  //   if (searchController.text.isNotEmpty) {
-  //     _contacts.retainWhere((contact) {
-  //       String searchTerm = searchController.text.toLowerCase();
-  //       String searchTermFlatten = flattenPhoneNumber(searchTerm);
-  //       String contactName = contact.displayName.toLowerCase();
-  //       bool nameMatches = contactName.contains(searchTerm);
-  //       if (nameMatches == true) {
-  //         return true;
-  //       }
-
-  //       if (searchTermFlatten.isEmpty) {
-  //         return false;
-  //       }
-
-  //       var phone = contact.phones.firstWhere((phn) {
-  //         String phnFlattened = flattenPhoneNumber(phn.value);
-  //         return phnFlattened.contains(searchTermFlatten);
-  //       }, orElse: () => null);
-
-  //       return phone != null;
-  //     });
-  //   }
-  //   setState(() {
-  //     contactsFiltered = _contacts;
-  //   });
-  // }
 
   Future<void> getContacts() async {
     final Iterable<Contact> contacts = await ContactsService.getContacts(
@@ -145,7 +116,7 @@ class _ContactsPageState extends State<ContactsPage> {
     });
   }
  
-
+ 
 
   Icon actionIcon = new Icon(Icons.search);
   Widget appBarTitle = new Text("Select Contact");

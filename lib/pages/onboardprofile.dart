@@ -9,14 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:thegorgeousotp/firebasestorage/databsemethods.dart';
-import 'package:thegorgeousotp/pages/bottomsheet.dart';
-import 'package:thegorgeousotp/repos/candidate.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/pages/bottomsheet.dart';
+// import 'package:theproject/repos/candidate.dart';
+import 'package:theproject/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:thegorgeousotp/pages/home_page.dart';
-import 'package:thegorgeousotp/repos/storage_repo.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/pages/home_page.dart';
+import 'package:theproject/repos/storage_repo.dart';
+import 'package:theproject/theme.dart';
 import 'package:path_provider/path_provider.dart';
 
 class OnboardProfilePage extends StatefulWidget {
@@ -79,7 +79,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
     super.initState();
     getPhoto();
      permission();
-     Candidate().getContacts();
+    //  Candidate().getContacts();
     mapping(widget.user);
   }
 
@@ -330,7 +330,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
       "DateCreated" : formatter,
       "name": null,
       "profilePicture":
-          "https://cdn.business2community.com/wp-content/uploads/2017/08/blank-profile-picture-973460_640.png"
+          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
     };
     DatabaseMethods().uploadingUserInfo(user.uid, userInfoMap);
     DatabaseMethods().savePhonenumber(phoneNumber);

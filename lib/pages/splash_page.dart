@@ -2,11 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:thegorgeousotp/pages/home_page.dart';
-import 'package:thegorgeousotp/pages/login_page.dart';
-import 'package:thegorgeousotp/repos/candidate.dart';
-import 'package:thegorgeousotp/stores/login_store.dart';
-import 'package:thegorgeousotp/theme.dart';
+import 'package:theproject/pages/home_page.dart';
+import 'package:theproject/pages/login_page.dart';
+// import 'package:theproject/repos/candidate.dart';
+import 'package:theproject/stores/login_store.dart';
+import 'package:theproject/theme.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({Key key}) : super(key: key);
@@ -24,7 +24,7 @@ class _SplashPageState extends State<SplashPage> {
           .isAlreadyAuthenticated()
           .then((result) {
         if (result) {
-          Candidate().getContacts();
+          // Candidate().getContacts();
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const HomePage()),
               (Route<dynamic> route) => false);
