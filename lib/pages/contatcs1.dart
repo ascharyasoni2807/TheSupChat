@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/chatScreen.dart';
+import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/theme.dart';
 import 'package:theproject/repos/storage_repo.dart';
 
@@ -47,27 +48,33 @@ class _ContactsPageState extends State<ContactsPage> {
       server["phoneNumberWithCountry"],
       currentUid.phoneNumber
     ];
+    final selfPhoneNumber = CustomFunctions().shortPhoneNumber(currentUid.phoneNumber);
     print(phones);
     print(users);
     Map<String, dynamic> selfchatRoomMap = {
       "users": users,
-      "chatroomId": server["phoneNumberWithCountry"].toString(),
+      "chatroomIdWithCountry": server["phoneNumberWithCountry"].toString(),
+      "phoneNumber" : server["phoneNumber"].toString(),
+      "uid":server["uid"],
       "time" : DateTime.now().millisecondsSinceEpoch,
-      "otherUserProfile" : server["profilePicture"].toString(),
+      "profilePicture" : server["profilePicture"].toString(),
     };
     print(users.reversed.toList());
     Map<String, dynamic> secondchatRoomMap = {
       "users": users.reversed.toList(),
-      "chatroomId": currentUid.phoneNumber.toString(),
+      "chatroomIdWithCountry": currentUid.phoneNumber,
+      "phoneNumber" :selfPhoneNumber,
+       "uid":currentUid.uid,
       "time" : DateTime.now().millisecondsSinceEpoch,
-      "otherUserProfile" : server["profilePicture"].toString()
+      "profilePicture" : currentUid.photoURL
     };
     DatabaseMethods()
         .createChatRoom(
             server["uid"],
             server["phoneNumberWithCountry"].toString(),
             selfchatRoomMap,
-            secondchatRoomMap)
+            secondchatRoomMap
+            )
         .then((value) {
       Navigator.push(context, MaterialPageRoute(builder: (context) {
         return ChatScreen(server: server, contact: contact);
@@ -90,6 +97,7 @@ class _ContactsPageState extends State<ContactsPage> {
       });
       phonenumber.addAll(element.phones.map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
     });
+    print(hashmap);
     await FirebaseFirestore.instance
         .collection("users")
         .get()
@@ -97,11 +105,15 @@ class _ContactsPageState extends State<ContactsPage> {
       querySnapshot.docs.forEach((result) {
         // print(result.data());
         final Map value = result.data();
+        bool a = phonenumber.contains(value['phoneNumberWithCountry']);
+        bool b = phonenumber.contains(value['phoneNumber']);
 
-        if (phonenumber.contains(value['phoneNumber'])) {
+        if (phonenumber.contains(value['phoneNumberWithCountry']) ||  phonenumber.contains(value['phoneNumber']) ) {
+          print(value['phoneNumberWithCountry']);
+          print(value['phoneNumber']);
           foundusers.add({
             "serverData": value,
-            "phoneData": hashmap[value['phoneNumber']]
+            "phoneData":  a? hashmap[value['phoneNumberWithCountry']] : hashmap[value['phoneNumber']]
           });
          
         
@@ -110,21 +122,23 @@ class _ContactsPageState extends State<ContactsPage> {
         }
       });
     });
+    print(foundusers);
     //  print(  foundusers[0]["phoneData"].displayName);
     setState(() {
       isbuilding = true;
     });
   }
- 
+
  
 
   Icon actionIcon = new Icon(Icons.search);
-  Widget appBarTitle = new Text("Select Contact");
+  Widget appBarTitle = new Text("Select Contact",style: TextStyle(color: Colors.white
+  ),);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: MyColors.buttoncolor,
+        backgroundColor:MyColors.maincolor,
         title: appBarTitle,
         actions: [
           new IconButton(
@@ -146,7 +160,8 @@ class _ContactsPageState extends State<ContactsPage> {
                   );
                 } else {
                   this.actionIcon = new Icon(Icons.search);
-                  this.appBarTitle = new Text("Select Contact");
+                  this.appBarTitle = new Text("Select Contact",style: TextStyle(color: Colors.white),);
+
                 }
               });
             },
@@ -156,6 +171,8 @@ class _ContactsPageState extends State<ContactsPage> {
       body: foundusers != null
           ? isbuilding
               ? Container(
+                // color: Color(0xff03506f).withOpacity(0.3),
+                // Colors.blueGrey.withOpacity(0.5),
                   child: Column(
                     children: [
                       Expanded(
@@ -251,13 +268,20 @@ class _ContactsPageState extends State<ContactsPage> {
                                         : SizedBox.shrink();
                                   },
                                 )
-                              : Center(
-                                  child: progressIndicator()))
+                              : Container(
+                                  //  color: Colors.blueGrey.withOpacity(0.5),
+                                child: Center(
+                                    child: progressIndicator()),
+                              ))
                     ],
                   ),
                 )
-              : Center(child: progressIndicator())
-          : Center(child:  progressIndicator()),
+              : Container(
+                   color: Colors.blueGrey.withOpacity(0.5),
+                child: Center(child: progressIndicator()))
+          : Container(
+               color: Colors.blueGrey.withOpacity(0.5),
+            child: Center(child:  progressIndicator())),
     );
     
   }

@@ -16,6 +16,7 @@ final PermissionStatus permissionStatus = await _getPermission();
         } else {
           var reults2 = await Permission.storage.request();
           var result = await Permission.contacts.request();
+          var resulting = await Permission.microphone.request();
           //If permissions have been denied show standard cupertino alert dialog
           showDialog(
               context: context,
@@ -37,11 +38,14 @@ void permissioncheck (context) async {
 final PermissionStatus permissionStatus = await _getPermission();
  if (permissionStatus == PermissionStatus.granted) {
           //We can now access our contacts here
+          //
           Navigator.push(
               context, MaterialPageRoute(builder: (context) => ContactsPage()));
         } else {
 
           var result = await Permission.contacts;
+           var reults2 = await Permission.storage.request();
+          var resulting = await Permission.microphone.request();
           //If permissions have been denied show standard cupertino alert dialog
           showDialog(
               context: context,
@@ -63,6 +67,8 @@ final PermissionStatus permissionStatus = await _getPermission();
  Future<PermissionStatus> _getPermission() async {
     final PermissionStatus permission = await Permission.contacts.status;
     final PermissionStatus permissions = await Permission.contacts.request(); 
+    //  var reults2 = await Permission.storage.request();
+    //       var resulting = await Permission.microphone.request();
     return permissions;
   //   if (permission != PermissionStatus.granted &&
   //       permission != PermissionStatus.denied) {

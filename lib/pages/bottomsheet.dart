@@ -29,10 +29,10 @@ class BottomSheetExample extends StatelessWidget {
      ),
         autofocus: true,
         controller: nameofuser,
-        onChanged: (text) {
-          print(text);
-          // value = text;
-        },
+        // onChanged: (value) {
+        //   print(value);
+        //   // value = text;
+        // },
         ),
         // ignore: deprecated_member_use
         RaisedButton(

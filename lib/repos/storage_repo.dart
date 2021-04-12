@@ -26,6 +26,7 @@ final _scaffoldKey = GlobalKey<ScaffoldState>();
 final FirebaseAuth _auth = FirebaseAuth.instance;
  String downloadUrl;
  
+ 
  Future uploadPic(File file ) async {
  String a;
  
@@ -41,10 +42,12 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
     
     print('complete'));
      downloadUrl = await taskSnapshot.ref.getDownloadURL();
+   await  user.updateProfile(photoURL: downloadUrl);
     print(uploadTask.snapshot); 
     //  _scaffoldKey.currentState.showSnackBar( SnackBar(content: Text("Profile Pic updated")));  
        }
     print('completed');
+  
  
  //uploading in users data
     FirebaseFirestore.instance
@@ -61,7 +64,7 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
 
 
 
-Future uploadChatPic(FilePickerResult file , otherUid, ImageUploadProvider _imageUploadProvider) async {
+Future uploadChatPic(File file , otherUid,basenames, ImageUploadProvider _imageUploadProvider) async {
 var user = await _auth.currentUser;
 var imageurl;
 
@@ -86,13 +89,13 @@ _imageUploadProvider.setToLoading();
    int random = ran.nextInt(999999);
   firebase_storage.Reference reference1 =  firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${otherUid}_${user.uid}");
         // firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid);
-   firebase_storage.Reference reference2 =firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid+random.toString());
+   firebase_storage.Reference reference2 =firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid+random.toString()+"_"+basenames);
   if(reference1==null && reference2==null ) {
 
-    firebase_storage.Reference reference =  firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${otherUid}_${user.uid}/${user.uid}"+"_"+otherUid+random.toString());
+    firebase_storage.Reference reference =  firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${otherUid}_${user.uid}/${user.uid}"+"_"+otherUid+random.toString()+"_"+basenames);
     imageurl= startUpload(reference);
   }else {
-  firebase_storage.Reference reference =firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid+random.toString()); 
+  firebase_storage.Reference reference =firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid+random.toString()+"_"+basenames); 
    imageurl = startUpload(reference);
   }
  return imageurl;
@@ -139,10 +142,13 @@ Future<bool> _requestPermission(Permission permission) async {
       if (result == PermissionStatus.granted) {
         return true;
       }
+      else{
+        result=await permission.request();
+      }
     }
     return false;
   }
-Future<bool> saveFile(String url, String date) async {
+Future<bool> saveFile(String url, String date,basenames) async {
     Directory directory;
      final random = Random();
     int randoms = random.nextInt(99999);
@@ -161,23 +167,24 @@ Future<bool> saveFile(String url, String date) async {
               break;
             }
           }
-          newPath = newPath + "/SupChat/${date}";
+          newPath = newPath + "/SupChat/Received";
           directory = Directory(newPath);
         } else {
           return false;
         }
       } else {
         if (await _requestPermission(Permission.photos)) {
-          directory = await getTemporaryDirectory();
+          directory = await getExternalStorageDirectory();
         } else {
           return false;
         }
       }
-      File saveFile = File(directory.path + "/${date}-$randoms.jpg");
+      File saveFile = File(directory.path + "/${basenames}");
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
       if (await directory.exists()) {
+  
         await dio.download(url, saveFile.path,
             onReceiveProgress: (value1, value2) {
 

@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:theproject/providers/imageuploadprovider.dart';
-import 'package:theproject/repos/storage_repo.dart';
+
+import 'package:theproject/repos/customfunctions.dart';
 
 final databaseReference = FirebaseDatabase.instance.reference();
 final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -34,6 +32,10 @@ class DatabaseMethods {
     readProfile(uid);
   }
 
+
+
+
+ 
   var currentuser = _auth.currentUser.uid;
 
   Future<void> updateNameofuser(name) async {
@@ -70,27 +72,20 @@ class DatabaseMethods {
     });
   }
 
-
-
- 
-
-
   Future<void> createChatRoom(
-      serveruid,serverPhone, selfchatRoomMap, secondchatRoomMap) async {
+      serveruid, serverPhone, selfchatRoomMap, secondchatRoomMap) async {
+    var user = _auth.currentUser;
+    var phoneNumber =
+        CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
 
-      var user =_auth.currentUser;
-     var phoneNumber = user.phoneNumber.toString();
-
-    phoneNumber = phoneNumber.substring(phoneNumber.length - 10); 
-    if(serverPhone.contains("+")){
-        print("yesss");
-        serverPhone = serverPhone.substring(serverPhone.length - 10);
-        print(serverPhone);
-      }else {
-        serverPhone=serverPhone;
-        print(serverPhone);
-      } 
-
+    if (serverPhone.contains("+")) {
+      print("yesss");
+      serverPhone = serverPhone.substring(serverPhone.length - 10);
+      print(serverPhone);
+    } else {
+      serverPhone = serverPhone;
+      print(serverPhone);
+    }
 
     final snapShot = await FirebaseFirestore.instance
         .collection('ChatRoom')
@@ -103,32 +98,26 @@ class DatabaseMethods {
         .doc(serverPhone.toString())
         // collection('Chats').where('chatroomId' , isEqualTo :_auth.currentUser.uid)
         .get();
+
     print(snapShot.data());
     print(serversnapShot.data());
     if (snapShot.data() == null || !snapShot.exists) {
       print("current user not exist krta hai");
-      FirebaseFirestore.instance
-          .collection("ChatRoom")
-          .doc(phoneNumber)
+      FirebaseFirestore.instance.collection("ChatRoom").doc(phoneNumber)
           // .collection("Chats").doc(serverPhone.toString())
-          .set({'uid':_auth.currentUser.uid})
-          .catchError((e) {
+          .set({'uid': _auth.currentUser.uid}).catchError((e) {
         print(e.toString());
       }).then((value) {
         FirebaseFirestore.instance
             .collection("ChatRoom")
             .doc(phoneNumber)
             .collection("ListUsers")
-            .doc(_auth.currentUser.uid.toString()+"_"+serveruid)
+            .doc(_auth.currentUser.uid.toString() + "_" + serveruid)
             .set(selfchatRoomMap);
         if (serversnapShot.data() == null || !serversnapShot.exists) {
-
-          FirebaseFirestore.instance
-              .collection("ChatRoom")
-              .doc(serverPhone)
+          FirebaseFirestore.instance.collection("ChatRoom").doc(serverPhone)
               // .collection("Chats").doc(serverPhone.toString())
-              .set({'uid':serveruid})
-              .catchError((e) {
+              .set({'uid': serveruid}).catchError((e) {
             print(e);
           }).then((value) {
             print("server data created and adding data");
@@ -136,7 +125,7 @@ class DatabaseMethods {
                 .collection("ChatRoom")
                 .doc(serverPhone.toString())
                 .collection("ListUsers")
-                .doc(serveruid+"_"+_auth.currentUser.uid.toString())
+                .doc(serveruid + "_" + _auth.currentUser.uid.toString())
                 .set(secondchatRoomMap)
                 .catchError((e) {
               print(e.toString());
@@ -148,7 +137,7 @@ class DatabaseMethods {
               .collection("ChatRoom")
               .doc(serverPhone.toString())
               .collection("ListUsers")
-              .doc(serveruid+"_"+_auth.currentUser.uid.toString())
+              .doc(serveruid + "_" + _auth.currentUser.uid.toString())
               .set(secondchatRoomMap)
               .catchError((e) {
             print(e.toString());
@@ -161,156 +150,161 @@ class DatabaseMethods {
           .collection("ChatRoom")
           .doc(phoneNumber)
           .collection("ListUsers")
-          .doc(_auth.currentUser.uid.toString()+"_"+serveruid)
+          .doc(_auth.currentUser.uid.toString() + "_" + serveruid)
           .set(selfchatRoomMap);
-
-
-       if (serversnapShot.data() == null || !serversnapShot.exists) {
-          FirebaseFirestore.instance
-              .collection("ChatRoom")
-              .doc(serverPhone)
-              // .collection("Chats").doc(serverPhone.toString())
-              .set({'uid':serveruid})
-              .catchError((e) {
-            print(e);
-          }).then((value) {
-            print("server data created and adding data");
-            FirebaseFirestore.instance
-                .collection("ChatRoom")
-                .doc(serverPhone.toString())
-                .collection("ListUsers")
-                .doc(serveruid+"_"+_auth.currentUser.uid.toString())
-                .set(secondchatRoomMap)
-                .catchError((e) {
-              print(e.toString());
-            });
-          });
-        } else {
-          print("other user exist already  hai , chat room bana rahe hai");
+      if (serversnapShot.data() == null || !serversnapShot.exists) {
+        FirebaseFirestore.instance.collection("ChatRoom").doc(serverPhone)
+            // .collection("Chats").doc(serverPhone.toString())
+            .set({'uid': serveruid}).catchError((e) {
+          print(e);
+        }).then((value) {
+          print("server data created and adding data");
           FirebaseFirestore.instance
               .collection("ChatRoom")
               .doc(serverPhone.toString())
               .collection("ListUsers")
-              .doc(serveruid+"_"+_auth.currentUser.uid.toString())
+              .doc(serveruid + "_" + _auth.currentUser.uid.toString())
               .set(secondchatRoomMap)
               .catchError((e) {
             print(e.toString());
           });
-        }   
+        });
+      } else {
+        print("other user exist already  hai , chat room bana rahe hai");
+        FirebaseFirestore.instance
+            .collection("ChatRoom")
+            .doc(serverPhone.toString())
+            .collection("ListUsers")
+            .doc(serveruid + "_" + _auth.currentUser.uid.toString())
+            .set(secondchatRoomMap)
+            .catchError((e) {
+          print(e.toString());
+        });
+      }
     }
-
-   
-
-
-
   }
 
-   addConvMessage(otherphone, messageMap ,serveruid,othermessageMap ) async {
-     var user =_auth.currentUser;
-var phoneNumber = user.phoneNumber.toString();
+  addConvMessage(otherphone, messageMap, serveruid, othermessageMap) async {
+    var user = _auth.currentUser;
+    var phoneNumber = user.phoneNumber.toString();
 
     phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
-  
+
     print("ppppppppppppppppppppppppppppppp" + phoneNumber);
 
-  FirebaseFirestore.instance
+    FirebaseFirestore.instance
         .collection("ChatRoom")
         .doc(phoneNumber)
-        .collection("ListUsers").doc((_auth.currentUser.uid.toString()+"_"+serveruid)).collection("Chats")
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + "_" + serveruid))
+        .collection("Chats")
         .add(messageMap)
         .catchError((e) {
       print(e.toString());
     }).then((value) async {
       print(value);
       print(otherphone);
-      if(otherphone.contains("+")){
+      if (otherphone.contains("+")) {
         print("yesss");
         otherphone = otherphone.substring(otherphone.length - 10);
         print(otherphone);
-      }else {
-        otherphone=otherphone;
+      } else {
+        otherphone = otherphone;
         print(otherphone);
       }
-    await   FirebaseFirestore.instance
-        .collection("ChatRoom")
-        .doc(otherphone)
-        .collection("ListUsers").doc((serveruid+"_"+_auth.currentUser.uid.toString())).collection("Chats")
-        .add(messageMap).catchError((onError){
-          print(onError);
-        });
-
+      await FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(otherphone)
+          .collection("ListUsers")
+          .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
+          .collection("Chats")
+          .add(messageMap)
+          .catchError((onError) {
+        print(onError);
+      });
     });
   }
 
-
-   addImageConvMessage(otherPhone, messageMap ,serveruid ,othermessageMap) {
+  addImageConvMessage(otherPhone, messageMap, serveruid, othermessageMap) {
     // ImageUploadProvider _imageUploadProvider;
     print(_auth.currentUser.phoneNumber);
-        var user =_auth.currentUser;
-var phoneNumber = user.phoneNumber.toString();
-
-    phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
+    var user = _auth.currentUser;
+    var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
     FirebaseFirestore.instance
         .collection("ChatRoom")
         .doc(phoneNumber)
-        .collection("ListUsers").doc((_auth.currentUser.uid.toString()+'_'+serveruid)).collection("Chats")
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
+        .collection("Chats")
         .add(messageMap)
         .catchError((e) {
       print(e.toString());
-    }).then((value){
-        if(otherPhone.contains("+")){
+    }).then((value) {
+      if (otherPhone.contains("+")) {
         print("yesss");
-        otherPhone = otherPhone.substring(otherPhone.length - 10);
+        otherPhone = CustomFunctions().shortPhoneNumber(otherPhone);
         print(otherPhone);
-      }else {
-        otherPhone=otherPhone;
+      } else {
+        otherPhone = otherPhone;
         print(otherPhone);
       }
 
-       FirebaseFirestore.instance
-        .collection("ChatRoom")
-        .doc(otherPhone)
-        .collection("ListUsers").doc((serveruid+"_"+_auth.currentUser.uid.toString())).collection("Chats")
-        .add(messageMap);
-
+      FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(otherPhone)
+          .collection("ListUsers")
+          .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
+          .collection("Chats")
+          .add(messageMap);
     });
+
+    return 'completed';
   }
 
- int perPage = 10;
-   getConvoMessage(serveruid) async {
-      var user =_auth.currentUser;
-var phoneNumber = user.phoneNumber.toString();
-
-    phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
+  int perPage = 10;
+  getConvoMessage(serveruid) async {
+    var user = _auth.currentUser;
+    var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
 
     return await FirebaseFirestore.instance
         .collection("ChatRoom")
         .doc(phoneNumber)
-        .collection("ListUsers").doc((_auth.currentUser.uid.toString()+'_'+serveruid)).collection("Chats")
-        .orderBy("time", descending: true).limit(perPage)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
+        .collection("Chats")
+        .orderBy("time", descending: true)
+        .limit(perPage)
         .snapshots();
   }
 
-
-
-  getNextConvo (String chatroomId) async {
-
+  getNextConvo(String chatroomId) async {
     // return await FirebaseFirestore.instance
     //       .collection("ChatRoom")
     //     .doc(_auth.currentUser.phoneNumber)
     //     .collection("ListUsers").doc((_auth.currentUser.uid.toString()+'_'+serveruid)).collection("Chats")
     //     .orderBy("time", descending: true).limit(perPage)
     //     .snapshots();
-
-
   }
 
   getHomeUsers() async {
-       return  await FirebaseFirestore.instance
-        .collection("ChatRoom").doc(_auth.currentUser.phoneNumber.toString()).collection("ListUsers")
+    return await FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(_auth.currentUser.phoneNumber.toString())
+        .collection("ListUsers")
         .orderBy("time")
         .snapshots();
+  }
 
+ Future getPhotoUrlofanyUser(uid) async {
+    var url;
+    var data =
+        await FirebaseFirestore.instance.doc("users/$uid").get().then((value) {
+      print(value['profilePicture']);
+      print("skajbdfjasfsajbsjcbsajcj");
+      return value['profilePicture'];
+    });
+
+    return data.toString();
   }
 
   Future<void> savePhonenumber(phone) async {

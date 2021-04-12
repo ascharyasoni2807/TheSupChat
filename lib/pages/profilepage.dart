@@ -9,12 +9,13 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/bottomsheet.dart';
+import 'package:theproject/pages/previewImage.dart';
 import 'package:theproject/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theproject/pages/home_page.dart';
 import 'package:theproject/repos/storage_repo.dart';
 import 'package:theproject/theme.dart';
-import 'package:path_provider/path_provider.dart';
+
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -78,15 +79,41 @@ class _ProfilePageState extends State<ProfilePage> {
     if (croppedImage != null) {
       _image = croppedImage;
 
-      print('completed');
+      print('completed cropping');
 
       await StorageRepo().uploadPic(_image);
+
+      print("completed upload");
       setState(() {
         _image = croppedImage;
         isCompleted = true;
       });
     }
   }
+
+
+  Widget _buildPopupDialog(BuildContext context, image) {
+  return Center(
+    child: GestureDetector(
+      onTap:(){
+       Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewPage(imageUrl:image)));
+        print("bvfhjgjdfe");
+      } ,
+          child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black),
+            color: Colors.black,
+          ),
+          height: 300,
+          width: 300,
+          // color: Colors.black,
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: CachedNetworkImage(imageUrl: image),
+          )),
+    ),
+  );
+}
 
   @override
   void dispose() {
@@ -98,37 +125,47 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          backgroundColor: MyColors.maincolor, title: Text('Profile Info')),
+         
+          backgroundColor: Color(0xff028090), title: Text('Profile Info')),
       body: Container(
         height: double.infinity,
         width: double.infinity,
-        color: Colors.grey[400],
+        color: Colors.white,
         child: SingleChildScrollView(
           child: Column(
+    
             children: [
               Stack(children: [
-                Container(
-                  height: MediaQuery.of(context).size.height * 0.22,
-                  decoration: BoxDecoration(
-                    color: MyColors.maincolor,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(80.0),
-                      bottomRight: Radius.circular(80.0),
-                    ),
-                  ),
-                ),
+                // Container(
+                //   height: MediaQuery.of(context).size.height * 0.22,
+                //   decoration: BoxDecoration(
+                //     color: Color(0xff028090),
+                //     borderRadius: BorderRadius.only(
+                //       bottomLeft: Radius.circular(80.0),
+                //       bottomRight: Radius.circular(80.0),
+                //     ),
+                //   ),
+                // ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 95),
+                  padding: const EdgeInsets.only(top: 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Stack(children: [
                         GestureDetector(
-                          onTap: getImage,
+                          onTap:() {showDialog(
+                    
+                    barrierColor: Colors.black.withOpacity(0.5),
+                    context: context,
+                    builder: (BuildContext context) =>
+                        _buildPopupDialog(context, userPhotos),
+                  );},
                           child: CircleAvatar(
-                            radius: 70,
+                            
+                            radius: 80,
                             backgroundColor: Colors.black,
                             child: ClipOval(
+                              
                               child: AspectRatio(
                                 aspectRatio: 1,
                                 child: SizedBox(
@@ -156,7 +193,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                             // )
                                             : CircularProgressIndicator
                                                 .adaptive()
-                                        : CircularProgressIndicator.adaptive()),
+                                        : CircularProgressIndicator.adaptive(
+                                          strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        )),
                               ),
                             ),
                           ),
@@ -164,12 +203,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         GestureDetector(
                           onTap: getImage,
                           child: Padding(
-                              padding: EdgeInsets.only(top: 95.0, left: 95.0),
+                              padding: EdgeInsets.only(top: 110.0, left: 111.0),
                               child: new Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
                                   new CircleAvatar(
-                                    backgroundColor: Colors.black,
+                                    backgroundColor: MyColors.maincolor,
                                     radius: 20.0,
                                     child: new Icon(
                                       Icons.camera_alt,
@@ -184,11 +223,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ]),
+              SizedBox(height:20),
               Container(
                 width: MediaQuery.of(context).size.width * 0.75,
                 height: 60,
                 child: Card(
-                  color: MyColors.maincolor,
+                color: Color(0xff028090),
                   child: ListTile(
                     leading: Icon(
                       Icons.people_alt,
@@ -237,7 +277,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 width: MediaQuery.of(context).size.width * 0.75,
                 height: 60,
                 child: Card(
-                  color: MyColors.maincolor,
+                 color: Color(0xff028090),
                   child: ListTile(
                     leading:   Icon(Icons.phone,color: Colors.white,),
                     title:   Row(
@@ -262,8 +302,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.all(12.0),
                 child: Container(
                     child: Text(
-                        "Your profile is end-to-end encrypted.  Your Profile And changes will be visible to your contacts.")),
-              )
+                        "Your profile is end-to-end encrypted.  Your profile and changes will be visible to your contacts.",style: TextStyle(color: Colors.grey[500],fontSize: 12),)),
+              ),
+        
             ],
           ),
         ),

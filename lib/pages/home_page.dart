@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:theproject/repos/customfunctions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -15,8 +15,10 @@ import 'package:theproject/pages/profilepage.dart';
 import 'package:theproject/stores/login_store.dart';
 import 'package:theproject/theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:theproject/widgets/cachedImage.dart';
 import 'package:theproject/widgets/cirindi.dart';
 import '../theme.dart';
+import 'package:theproject/pages/chatScreen.dart';
 import "package:theproject/pages/permission.dart";
 
 class HomePage extends StatefulWidget {
@@ -46,35 +48,31 @@ class _HomePageState extends State<HomePage> {
   //     });
   //   });
   // }
-  // 
-  
-  
+  //
+
   @override
   void initState() {
     // TODO: implement initState
     //  getContacts();
     // ContactPermission().permissioncheck(context);
-    getUserInfo();
+    // getUserInfo();
+ 
     getContacts();
-    
-
-    
+   
+      super.initState();
     // getContacts();
-    super.initState();
+    
   }
 
   final foundusers = [];
   final phonenumber = [];
 
   getContacts() async {
-
-
     final Iterable<Contact> contacts = await ContactsService.getContacts(
       withThumbnails: false,
     );
-           var user =_auth.currentUser;
-var selfPhone = user.phoneNumber.toString();
-    selfPhone = selfPhone.substring(selfPhone.length - 10);
+    var user = _auth.currentUser;
+    var selfPhone = CustomFunctions().shortPhoneNumber(user.phoneNumber);
 
     // final contacts =  _contacts.toList();
     Map hashmap = Map();
@@ -87,64 +85,83 @@ var selfPhone = user.phoneNumber.toString();
       phonenumber.addAll(element.phones
           .map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
     });
-    await FirebaseFirestore.instance
-        .collection(
-            "ChatRoom/${selfPhone}/ListUsers")
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      querySnapshot.docs.forEach((result) {
+ var listenvalue;
+    FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(selfPhone)
+        .collection("ListUsers")
+        .orderBy("time", descending: true)
+        .snapshots()
+        .listen((result) {
+          print(result.docs.toList().iterator);
+          listenvalue = FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(selfPhone)
+        .collection("ListUsers")
+        .orderBy("time")
+        .snapshots();
+       setState(() {
+           chatroomstream = listenvalue;
+           isbuilding = true;
+        });
+       
+      }); 
+       
+     FirebaseFirestore.instance
+        .collection("ChatRoom/$selfPhone/ListUsers")
+        .orderBy("time", descending: true)
+        .snapshots()
+        .listen((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((result)async {
         // print(result.data());
         final Map value = result.data();
 
-        if (phonenumber.contains(value['chatroomId'])) {
-          foundusers.add(
-              {"serverData": value, "phoneData": hashmap[value['chatroomId']]});
-
-          print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        bool a = phonenumber.contains(value['chatroomIdWithCountry']);
+        bool b = phonenumber.contains(value['phoneNumber']);
+         var allProfilePic;
+            allProfilePic = await DatabaseMethods().getPhotoUrlofanyUser(value["uid"]);
+        setState(() {
+        });
+     
+        if (phonenumber.contains(value['phoneNumber']) ||
+            phonenumber.contains(value['chatroomIdWithCountry'])) {
+          print(value['chatroomIdWithCountry']);
+          print(value['phoneNumber']);
+          print(a);
+          print(b);
+          foundusers.add({
+            "serverData": value,
+            "profilePicture" : allProfilePic,
+            "phoneData": a
+                ? hashmap[value['chatroomIdWithCountry']]
+                : hashmap[value['phoneNumber']]
+          });
           print(value);
         }
       });
     });
-    //  print(  foundusers[0]["phoneData"].displayName);
-    setState(() {
-      isbuilding = false;
-     
-    });
-// //  await singelTonUsers.getContacts();
-//  setState(() {
-//   checkState = true;
-//  });
+
+  //  setState(() {
+  //    isbuilding=true;
+  //  });
+
   }
 
-   getUserInfo() async {
-    print('heeloji');
-       var user =_auth.currentUser;
-var phoneNumber = user.phoneNumber.toString();
-    phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
-  
-     var value = FirebaseFirestore.instance
-        .collection("ChatRoom").doc(phoneNumber).collection("ListUsers").orderBy("time")
-        .snapshots();
-    // print(value);
-    setState(() {
-     
-      chatroomstream = value;
-
-      isbuilding = false;
-      // getContacts();
-    });
-    // chatroomstream.listen((event) { 
-      
-    // });
-  }
- @override
+  // getUserInfo() async {
+  //   print('heeloji');
+  //   var user = _auth.currentUser;
+  //   var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
+ 
+  // }
+   @override
  void dispose() { 
    
    super.dispose();
  }
+
   Widget chatRoomList() {
     return foundusers != null
-        ? !isbuilding
+        ? isbuilding
             ? StreamBuilder<QuerySnapshot>(
                 stream: chatroomstream,
                 builder: (BuildContext context,
@@ -164,12 +181,33 @@ var phoneNumber = user.phoneNumber.toString();
                                         foundusers.elementAt(index);
                                     Contact contact = _contact["phoneData"];
                                     final serverData = _contact["serverData"];
-                                    return Chatroomtile(
-                                        userName: contact?.displayName ?? null,
-                                        // .replaceAll("_", ""),
-                                        // .replaceAll(Constants.myName, ''),
-                                        chatRoomId: serverData["chatroomId"],
-                                        image: serverData["otherUserProfile"]);
+                                    final imageurl = _contact["profilePicture"];
+                                    return Column(
+                                      children: [
+                                        Chatroomtile(
+                                            userName:
+                                                contact?.displayName ?? contact.phones.first,
+                                            // .replaceAll("_", ""),
+                                            // .replaceAll(Constants.myName, ''),
+                                            server: serverData,
+                                            contact: contact,
+                                               
+                                            image:
+                                                imageurl),
+                                        Container(
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          margin: EdgeInsets.only(left: 90),
+                                          decoration: BoxDecoration(
+                                            color: Colors.yellow,
+                                            border: Border(
+                                              bottom: BorderSide(
+                                                  color: Colors.grey, width: 1),
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    );
                                   }),
                             ],
                           ),
@@ -186,8 +224,6 @@ var phoneNumber = user.phoneNumber.toString();
     var datareference = FirebaseFirestore.instance.collection("chatroomId");
   }
 
- 
-
   @override
   Widget build(BuildContext context) {
     return Consumer<LoginStore>(
@@ -199,12 +235,12 @@ var phoneNumber = user.phoneNumber.toString();
                 "Chats",
                 style: TextStyle(color: Colors.white),
               ),
-              backgroundColor: MyColors.buttoncolor,
+              backgroundColor:Color(0xff028090),
               actions: [
                 Container(
                     padding: EdgeInsets.symmetric(horizontal: 2),
                     child: IconButton(
-                      icon: Icon(Icons.logout),
+                      icon: Icon(Icons.logout,color: Colors.white,),
                       onPressed: () {
                         loginStore.signOut(context);
 
@@ -214,24 +250,20 @@ var phoneNumber = user.phoneNumber.toString();
                 Container(
                     padding: EdgeInsets.symmetric(horizontal: 0),
                     child: IconButton(
-                        icon: Icon(Icons.face_retouching_natural),
+                        icon: Icon(Icons.face_retouching_natural,color: Colors.white,),
                         onPressed: () {
                           // loginStore.signOut(context);
                           Navigator.push(
                               context,
                               CupertinoPageRoute(
+                                
+                                
                                   builder: (context) => ProfilePage()));
                           print("profile");
                         }))
               ]),
           body: Container(
-            // color: Color(0xff536162),
-            child: Center(child: ListView(
-              children: [chatRoomList()])
-              ),
-
-
-
+            child: Center(child: ListView(children: [chatRoomList()])),
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
@@ -249,20 +281,57 @@ var phoneNumber = user.phoneNumber.toString();
   }
 }
 
+// profile show dialogBox
+
+Widget _buildPopupDialog(BuildContext context, image, name) {
+  return Center(
+    child: Container(
+        decoration: BoxDecoration(
+          // border: Border.all(color: Colors.black),
+          color: Colors.black,
+        ),
+        height: 300,
+        width: 300,
+        // color: Colors.black,
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: Stack(
+            children: [
+              CachedNetworkImage(imageUrl: image),
+              Container(
+                  width: 300,
+                  color: Colors.transparent.withOpacity(0.6),
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500),
+                  )),
+            ],
+          ),
+        )),
+  );
+}
+
 class Chatroomtile extends StatelessWidget {
   final String userName;
-  final String chatRoomId;
+  final  server;
+  final contact;
+
   var image;
 
-  Chatroomtile({this.userName, this.chatRoomId, this.image});
+  Chatroomtile({this.userName, this.server,this.contact, this.image});
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        print(chatRoomId);
+        print(contact.displayName);
         print("innnnnnn");
-        // Navigator.push(context,
-        //     MaterialPageRoute(builder: (context) => Chatscreen(chatRoomId)));
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return ChatScreen(server: server, contact: contact);
+      }));
       },
       onDoubleTap: () {
         print("null");
@@ -271,30 +340,54 @@ class Chatroomtile extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         // separatorBuilder: (BuildContext context, int index) => Divider(height: 1),
         leading: image != null
-            ? CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.black,
-                child: ClipOval(
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: SizedBox(
-                        height:50,
-                        width: 50,
-                        child: (image != null)
-                            ? CachedNetworkImage(
-                                imageUrl: image,
-                                progressIndicatorBuilder:
-                                    (context, url, downloadProgress) =>
-                                        CircularProgressIndicator(
-                                            value: downloadProgress.progress),
-                                errorWidget: (context, url, error) =>
-                                    Icon(Icons.error),
-                              )
-                            : Image.asset('assets/img/pp.png')),
+            ? GestureDetector(
+                onTap: () {
+             
+                  print("opening image");
+                  showDialog(
+                    // barrierColor: Colors.black.withOpacity(0.5),
+                    context: context,
+                    builder: (BuildContext context) =>
+                        _buildPopupDialog(context, image, userName),
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.black,
+                  child: ClipOval(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: SizedBox(
+                          height: 50,
+                          width: 50,
+                          child: (image != null)
+                              ? CachedNetworkImage(
+                                  imageUrl: image,
+                                  progressIndicatorBuilder:
+                                      (context, url, downloadProgress) =>
+                                          CircularProgressIndicator(
+                                              value: downloadProgress.progress),
+                                  errorWidget: (context, url, error) =>
+                                      Icon(Icons.error),
+                                )
+                              : Image.asset('assets/img/pp.png')),
+                    ),
                   ),
                 ),
               )
-            : Image.asset('assets/img/pp.png'),
+            : CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.black,
+                  child: ClipOval(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: SizedBox(
+                          height: 50,
+                          width: 50,
+                          child: Image.asset('assets/img/pp.png')),
+                    ),
+                  ),
+                ),
         title: Text(
           userName,
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),

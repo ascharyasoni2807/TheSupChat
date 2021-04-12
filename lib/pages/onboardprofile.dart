@@ -13,11 +13,10 @@ import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/bottomsheet.dart';
 // import 'package:theproject/repos/candidate.dart';
 import 'package:theproject/theme.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/pages/home_page.dart';
 import 'package:theproject/repos/storage_repo.dart';
-import 'package:theproject/theme.dart';
-import 'package:path_provider/path_provider.dart';
+
 
 class OnboardProfilePage extends StatefulWidget {
   final user;
@@ -134,18 +133,18 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
           child: Column(
             children: [
               Stack(children: [
-                Container(
-                  height: MediaQuery.of(context).size.height * 0.22,
-                  decoration: BoxDecoration(
-                    color: MyColors.maincolor,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(80.0),
-                      bottomRight: Radius.circular(80.0),
-                    ),
-                  ),
-                ),
+                // Container(
+                //   height: MediaQuery.of(context).size.height * 0.22,
+                //   decoration: BoxDecoration(
+                //     color: MyColors.maincolor,
+                //     borderRadius: BorderRadius.only(
+                //       bottomLeft: Radius.circular(80.0),
+                //       bottomRight: Radius.circular(80.0),
+                //     ),
+                //   ),
+                // ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 95),
+                  padding: const EdgeInsets.only(top: 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -153,7 +152,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                         GestureDetector(
                           onTap: getImage,
                           child: CircleAvatar(
-                            radius: 70,
+                            radius: 80,
                             backgroundColor: Colors.black,
                             child: ClipOval(
                               child: AspectRatio(
@@ -195,7 +194,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
                                   new CircleAvatar(
-                                    backgroundColor: Colors.black,
+                                    backgroundColor:MyColors.maincolor,
                                     radius: 20.0,
                                     child: new Icon(
                                       Icons.camera_alt,
@@ -210,6 +209,9 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                   ),
                 ),
               ]),
+              SizedBox(
+                height:20
+              ),
               Container(
                 width: MediaQuery.of(context).size.width * 0.75,
                 height: 80,
@@ -251,7 +253,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                       ],
                     ),
                     subtitle: Text("Your Name ",
-                        style: TextStyle(color: Colors.grey)),
+                        style: TextStyle(color: Colors.grey[400])),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
@@ -260,19 +262,16 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                   margin: EdgeInsets.all(10),
                 ),
               ),
-              Container(
+               Container(
                 width: MediaQuery.of(context).size.width * 0.75,
-                height: 80,
+                height: 60,
                 child: Card(
                   color: MyColors.maincolor,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: ListTile(
+                    leading:   Icon(Icons.phone,color: Colors.white,),
+                    title:   Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text("Phone Number : ",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.white)),
                       Flexible(
                           child: Text("$phoneNumberuser",
                               style: TextStyle(
@@ -281,12 +280,13 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                                   color: Colors.white)))
                     ],
                   ),
-                  shape: RoundedRectangleBorder(
+                  ),
+                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   elevation: 5,
-                  margin: EdgeInsets.all(10),
                 ),
+              
               ),
               Padding(
                 padding: const EdgeInsets.all(12.0),
@@ -315,8 +315,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
 
   void mapping(user) {
     var phoneNumber = user.phoneNumber.toString();
-
-    phoneNumber = phoneNumber.substring(phoneNumber.length - 10);
+    phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
     print("ppppppppppppppppppppppppppppppp" + phoneNumber);
    final now = DateTime.now();
   String formatter = DateFormat('yMd').add_jm().format(now);
