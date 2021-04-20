@@ -261,7 +261,7 @@ class DatabaseMethods {
     return 'completed';
   }
 
-  int perPage = 10;
+  int perPage = 30;
   getConvoMessage(serveruid) async {
     var user = _auth.currentUser;
     var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);

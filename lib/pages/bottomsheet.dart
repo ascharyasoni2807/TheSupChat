@@ -41,9 +41,19 @@ class BottomSheetExample extends StatelessWidget {
             Center(child: CircularProgressIndicator());
             print("inininnini");
             DatabaseMethods().saveName(nameofuser.value.text);
-         await DatabaseMethods().updateNameofuser(nameofuser.value.text);
+            print(nameofuser.value.text);
+            // print( nameofuser.value.text.split());
+            if( nameofuser.value.text.trim().toString().isNotEmpty){
+                     print("udruththdhtdhjtdj");
+                              await DatabaseMethods().updateNameofuser(nameofuser.value.text);
+                              Navigator.pop(context);
+                           
+            }else{
+              
+                              print("nothing");
+            }
              print("hello");
-               Navigator.pop(context);
+              //  Navigator.pop(context);
              }, 
           child: Text("Update And Save",style: TextStyle(color: Colors.white),)),
         

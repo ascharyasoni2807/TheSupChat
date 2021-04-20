@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,11 +9,14 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:theproject/enum/view_state.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/othersProfile.dart';
+import 'package:theproject/pages/permission.dart';
 import 'package:theproject/providers/imageuploadprovider.dart';
 import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/repos/storage_repo.dart';
@@ -43,6 +47,29 @@ final databaseReference = FirebaseDatabase.instance.reference();
 class _ChatScreenState extends State<ChatScreen> {
   ImageUploadProvider _imageUploadProvider;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  var picker = ImagePicker();
+
+  getCamera() async {
+    Random random = new Random();
+    int randomNumber = random.nextInt(999999);
+    var pickedFile =
+        await picker.getImage(source: ImageSource.camera, imageQuality: 50);
+    var now = new DateTime.now();
+    var formatter = new DateFormat('yyyy-MM-dd');
+    String formattedDate = formatter.format(now);
+    var a = DateFormat.jm().format(DateTime.now());
+    File files = File(pickedFile.path);
+    String filename = 'Image' + randomNumber.toString() + ".jpg";
+    filename = filename.trim();
+    var filetype = 'FileType.image';
+    print(pickedFile.path);
+    print(filename);
+    Navigator.pop(context);
+    String url = await StorageRepo()
+        .uploadChatPic(files, otherUid, filename, _imageUploadProvider);
+
+    sendImage(url, filetype, filename);
+  }
 
   showAttachmentBottomSheet(context) {
     showModalBottomSheet(
@@ -51,6 +78,21 @@ class _ChatScreenState extends State<ChatScreen> {
           return Container(
             child: Wrap(
               children: <Widget>[
+                ListTile(
+                  leading: Icon(
+                    Icons.camera_alt,
+                    color: MyColors.maincolor,
+                  ),
+                  title: Text('Camera',
+                      style: TextStyle(
+                          color: MyColors.maincolor,
+                          fontWeight: FontWeight.w500)),
+                  onTap: () async {
+                    await ContactPermission().permissioncheck2(context);
+                    await getCamera();
+                    print("ok");
+                  },
+                ),
                 ListTile(
                     leading: Icon(
                       Icons.image,
@@ -63,7 +105,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           fontWeight: FontWeight.w500),
                     ),
                     onTap: () => showFilePicker(FileType.image)),
-            
                 ListTile(
                   leading: Icon(
                     Icons.insert_drive_file,
@@ -142,14 +183,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   sendMessage() async {
     if (messagetext.text.isNotEmpty && messagetext.text.trim().isNotEmpty) {
+
       Map<String, dynamic> messageMap = {
-        "message": messagetext.text,
+        "message": messagetext.text.toString().trim(),
         "sendBy": selfUid,
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
       Map<String, dynamic> othermessageMap = {
-        "message": messagetext.text,
+        "message":messagetext.text.toString().trim(),
         "sendBy": otherUid,
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
@@ -184,6 +226,7 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.white,
             ),
             onPressed: () async {
+              
               print("add button");
               // focusNode: focusNode.unfocus();
               await showAttachmentBottomSheet(context);
@@ -218,7 +261,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool isLoading = true;
 
   @override
-  void initState() {
+  void initState()  {
     // TODO: implement initState
 
     server = widget.server;
@@ -422,29 +465,27 @@ class TileMessage extends StatelessWidget {
     var formatter = new DateFormat('yyyy-MM-dd');
     String formattedDate = formatter.format(now);
     print(formattedDate);
-    bool downloaded = await StorageRepo().saveFile(imgUrl, formattedDate,message);
+    bool downloaded =
+        await StorageRepo().saveFile(imgUrl, formattedDate, message);
     var a = DateFormat.jm().format(DateTime.now());
     print(a);
 
     if (downloaded) {
       print("File Downloaded");
-  
-     return  Fluttertoast.showToast(
-        msg:"File downloaded in TheSupChat folder",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 2
-    );
-    
+
+      return Fluttertoast.showToast(
+          msg: "File downloaded in TheSupChat folder",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 2);
     } else {
-       isDownloading = false;
-      return  Fluttertoast.showToast(
-        msg: "Problem Downloading File",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        backgroundColor: MyColors.maincolor,
-        timeInSecForIosWeb: 2
-    );
+      isDownloading = false;
+      return Fluttertoast.showToast(
+          msg: "Problem Downloading File",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: MyColors.maincolor,
+          timeInSecForIosWeb: 2);
     }
   }
 
@@ -465,7 +506,7 @@ class TileMessage extends StatelessWidget {
             },
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 5),
-              
+
               margin: isSendByMe
                   ? const EdgeInsets.only(top: 3, bottom: 5, left: 110)
                   : const EdgeInsets.only(top: 3, bottom: 5, right: 110),
@@ -506,10 +547,9 @@ class TileMessage extends StatelessWidget {
           )
         : type != "text" && type != "FileType.image"
             ? Container(
-              
                 margin: isSendByMe
-                    ? const EdgeInsets.only(left: 110,top: 3)
-                    : const EdgeInsets.only(right: 110,top: 3),
+                    ? const EdgeInsets.only(left: 110, top: 3)
+                    : const EdgeInsets.only(right: 110, top: 3),
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 width: MediaQuery.of(context).size.width * 0.7,
                 constraints: BoxConstraints(
@@ -529,7 +569,7 @@ class TileMessage extends StatelessWidget {
                                   Color(0xff028090),
                                   Color(0xff114b5f),
                                 ]),
-                      borderRadius:isSendByMe
+                      borderRadius: isSendByMe
                           ? const BorderRadius.only(
                               topLeft: Radius.circular(10),
                               topRight: Radius.circular(10),
@@ -553,10 +593,8 @@ class TileMessage extends StatelessWidget {
                           padding: EdgeInsets.all(2),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.file_copy_sharp,
-                                color: MyColors.maincolor,
-                              ),
+                              Icon(Icons.file_copy_sharp,
+                                  color: Color(0xff114b5f)),
                               SizedBox(width: 2),
                               Flexible(
                                 child: Text(
@@ -570,18 +608,17 @@ class TileMessage extends StatelessWidget {
                       // ignore: deprecated_member_use
                       !isSendByMe
                           ? Container(
-                            width: double.maxFinite,
-                            child: RaisedButton(
-                              
-                                color: MyColors.maincolor,
-                                onPressed: () {
-                                  downloadImage(imageUrl);
-                                },
-                                child: Icon(
-                                  Icons.file_download,
-                                  color: Colors.white,
-                                )),
-                          )
+                              width: double.maxFinite,
+                              child: RaisedButton(
+                                  color: MyColors.maincolor,
+                                  onPressed: () {
+                                    downloadImage(imageUrl);
+                                  },
+                                  child: Icon(
+                                    Icons.file_download,
+                                    color: Colors.white,
+                                  )),
+                            )
                           : Container(),
                       const SizedBox(height: 3),
                       Padding(
@@ -610,7 +647,9 @@ class TileMessage extends StatelessWidget {
                 child: Container(
                   margin: isSendByMe
                       ? const EdgeInsets.only(left: 110)
-                      : const EdgeInsets.only(right: 110,),
+                      : const EdgeInsets.only(
+                          right: 110,
+                        ),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(

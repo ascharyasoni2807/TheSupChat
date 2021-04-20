@@ -16,6 +16,7 @@ final PermissionStatus permissionStatus = await _getPermission();
         } else {
           var reults2 = await Permission.storage.request();
           var result = await Permission.contacts.request();
+          var resultcamera = await Permission.camera.request();
           var resulting = await Permission.microphone.request();
           //If permissions have been denied show standard cupertino alert dialog
           showDialog(
@@ -70,16 +71,7 @@ final PermissionStatus permissionStatus = await _getPermission();
     //  var reults2 = await Permission.storage.request();
     //       var resulting = await Permission.microphone.request();
     return permissions;
-  //   if (permission != PermissionStatus.granted &&
-  //       permission != PermissionStatus.denied) {
-  //     final Map<Permission, PermissionStatus> permissionStatus =
-  //         await [Permission.contacts].request();
-  //     return permissionStatus[Permission.contacts] ??
-  //         PermissionStatus.limited;
-  //   } else {
-  //     return permission;
-  //   }
-  // }
+
 
  }
 }

@@ -19,7 +19,7 @@ CachedImage({this.imageUrl});
     height: 220.0,
      decoration: BoxDecoration(
         border: Border.all(
-                    color: Colors.black ,
+                    color: Color(0xff11385f) ,
                     width: 3,
                   ),
         image: DecorationImage(
