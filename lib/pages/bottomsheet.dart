@@ -2,12 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/providers/imageuploadprovider.dart';
 import 'package:theproject/theme.dart';
 
 class BottomSheetExample extends StatelessWidget {
-
+  
   TextEditingController nameofuser = TextEditingController();
- 
+  var imageUploadProvider;
+  BottomSheetExample({this.imageUploadProvider});
+  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -38,7 +41,7 @@ class BottomSheetExample extends StatelessWidget {
         RaisedButton(
           color: MyColors.maincolor,
           onPressed: () async {
-            Center(child: CircularProgressIndicator());
+            imageUploadProvider.setToLoading();
             print("inininnini");
             DatabaseMethods().saveName(nameofuser.value.text);
             print(nameofuser.value.text);
@@ -46,8 +49,9 @@ class BottomSheetExample extends StatelessWidget {
             if( nameofuser.value.text.trim().toString().isNotEmpty){
                      print("udruththdhtdhjtdj");
                               await DatabaseMethods().updateNameofuser(nameofuser.value.text);
+                              imageUploadProvider.setToIdle();   
                               Navigator.pop(context);
-                           
+                  
             }else{
               
                               print("nothing");

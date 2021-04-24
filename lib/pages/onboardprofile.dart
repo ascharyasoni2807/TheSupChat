@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/bottomsheet.dart';
+import 'package:theproject/providers/imageuploadprovider.dart';
 // import 'package:theproject/repos/candidate.dart';
 import 'package:theproject/theme.dart';
 import 'package:theproject/repos/customfunctions.dart';
@@ -32,6 +33,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
   bool isCompleted = false;
   var picker = ImagePicker();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+   ImageUploadProvider _imageUploadProvider;
   var nameofuser;
   var phoneNumberuser;
   Directory appDocDir;
@@ -106,7 +108,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
 
       print('completed');
 
-      await StorageRepo().uploadPic(_image);
+      await StorageRepo().uploadPic(_image,_imageUploadProvider);
       setState(() {
         _image = croppedImage;
         isCompleted = true;

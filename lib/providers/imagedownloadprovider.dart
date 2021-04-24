@@ -1,0 +1,25 @@
+ 
+
+
+ import 'package:flutter/cupertino.dart';
+import 'package:theproject/enum/view_state.dart';
+
+class ImageDownloadProvider with ChangeNotifier {
+
+
+
+ViewState _viewState = ViewState.IDLE;
+ViewState get getViewState => _viewState;
+
+void setToLoading() {
+  _viewState = ViewState.Loading;
+  notifyListeners();
+}
+
+void setToIdle () {
+
+  _viewState = ViewState.IDLE;
+  notifyListeners();
+}
+
+}

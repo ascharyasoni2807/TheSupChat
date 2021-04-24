@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:filesize/filesize.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,8 +16,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:theproject/enum/view_state.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
+import 'package:theproject/pages/home_page.dart';
 import 'package:theproject/pages/othersProfile.dart';
 import 'package:theproject/pages/permission.dart';
+import 'package:theproject/providers/imagedownloadprovider.dart';
 import 'package:theproject/providers/imageuploadprovider.dart';
 import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/repos/storage_repo.dart';
@@ -46,6 +49,7 @@ final databaseReference = FirebaseDatabase.instance.reference();
 
 class _ChatScreenState extends State<ChatScreen> {
   ImageUploadProvider _imageUploadProvider;
+  ImageDownloadProvider _imageDownloadProvider;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   var picker = ImagePicker();
 
@@ -59,6 +63,8 @@ class _ChatScreenState extends State<ChatScreen> {
     String formattedDate = formatter.format(now);
     var a = DateFormat.jm().format(DateTime.now());
     File files = File(pickedFile.path);
+    var fs = filesize(files.lengthSync());
+    String sizes = fs;
     String filename = 'Image' + randomNumber.toString() + ".jpg";
     filename = filename.trim();
     var filetype = 'FileType.image';
@@ -68,7 +74,7 @@ class _ChatScreenState extends State<ChatScreen> {
     String url = await StorageRepo()
         .uploadChatPic(files, otherUid, filename, _imageUploadProvider);
 
-    sendImage(url, filetype, filename);
+    sendImage(url, filetype, filename,sizes);
   }
 
   showAttachmentBottomSheet(context) {
@@ -126,37 +132,47 @@ class _ChatScreenState extends State<ChatScreen> {
     FilePickerResult file = await FilePicker.platform.pickFiles(type: fileType);
     print(fileType);
     File files = File(file.files.single.path);
+  
+    
+      var fs = filesize(files.lengthSync());
+
+
+    String sizes = fs;
+   
     String basenames = file.files.single.name;
     print('a');
+
     Navigator.pop(context);
     String url = await StorageRepo()
-        .uploadChatPic(files, otherUid, basenames, _imageUploadProvider);
+        .uploadChatPic(files, otherUid, basenames, _imageUploadProvider,);
     print(url);
 
     // chatBloc.dispatch(SendAttachmentEvent(chat.chatId,file,fileType));
-    sendImage(url, fileType, basenames);
+    sendImage(url, fileType, basenames,sizes);
     print(file.paths);
 
     // GradientSnackBar.showMessage(context, 'Sending attachment..');
   }
 
-  sendImage(url, fileType, basenames) async {
+  sendImage(url, fileType, basenames,sizes) async {
     Map<String, dynamic> imagedetailMap = {
       "imageUrl": url.toString(),
       "sendBy": selfUid,
       "message": basenames.toString(),
       "time": DateTime.now().millisecondsSinceEpoch,
-      "type": fileType.toString()
+      "type": fileType.toString(),
+      "size": sizes,
     };
-    Map<String, dynamic> othermessageMap = {
-      "message": messagetext.text,
-      "sendBy": otherUid,
-      "time": DateTime.now().millisecondsSinceEpoch,
-      "type": "text"
-    };
+    // Map<String, dynamic> othermessageMap = {
+    //   "message": messagetext.text,
+    //   "sendBy": otherUid,
+    //   "time": DateTime.now().millisecondsSinceEpoch,
+    //   "type": "text",
+    //   "size": sizes,
+    // };
     DatabaseMethods()
         .addImageConvMessage(server["phoneNumber"], imagedetailMap,
-            server["uid"], othermessageMap)
+            server["uid"], )
         .then(() {
       updatetime();
     });
@@ -190,15 +206,15 @@ class _ChatScreenState extends State<ChatScreen> {
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
-      Map<String, dynamic> othermessageMap = {
-        "message":messagetext.text.toString().trim(),
-        "sendBy": otherUid,
-        "time": DateTime.now().millisecondsSinceEpoch,
-        "type": "text"
-      };
+      // Map<String, dynamic> othermessageMap = {
+      //   "message":messagetext.text.toString().trim(),
+      //   "sendBy": otherUid,
+      //   "time": DateTime.now().millisecondsSinceEpoch,
+      //   "type": "text"
+      // };
       await DatabaseMethods()
           .addConvMessage(
-              server["phoneNumber"], messageMap, server["uid"], othermessageMap)
+              server["phoneNumber"], messageMap, server["uid"], )
           .then((value) async {
         updatetime();
       });
@@ -243,6 +259,9 @@ class _ChatScreenState extends State<ChatScreen> {
 // DocumentSnapshot lastdocument;
   getMessages() async {
     await DatabaseMethods().getConvoMessage(otherUid).then((value) async {
+       setState(() {
+        chatMessageStream = value;
+      });
       print('heelo init');
       print(widget.server);
       print(widget.contact);
@@ -250,9 +269,7 @@ class _ChatScreenState extends State<ChatScreen> {
       otherURL = await DatabaseMethods().getPhotoUrlofanyUser(otherUid);
       print("ojojoajaos");
       print(otherURL);
-      setState(() {
-        chatMessageStream = value;
-      });
+     
       print(server);
       print(contact);
     });
@@ -291,158 +308,182 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
+      _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
 // WillPopScope(
 //       onWillPop: (){
 //         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomePage()), (Route<dynamic> route) => false);
 
 //       },
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        backgroundColor: Color(0xff028090),
-        flexibleSpace: SafeArea(
-          child: Container(
-            height: MediaQuery.of(context).size.height * 95,
-            padding: const EdgeInsets.only(right: 16),
-            child: Row(
-              children: <Widget>[
-                IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(
-                  width: 2,
-                ),
-                CircleAvatar(
-                  backgroundColor: Colors.black,
-                  minRadius: 20,
-                  maxRadius: 20,
-                  child: ClipOval(
-                      child: AspectRatio(
-                          aspectRatio: 1,
-                          child: SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CachedNetworkImage(imageUrl: otherURL)))),
-                ),
-                const SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                              builder: (context) => OtherProfileView(
-                                  server: server, image: otherURL)));
+    return WillPopScope(
+       onWillPop: (){
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomePage()), (Route<dynamic> route) => false);
+
+      },
+          child: Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          backgroundColor: Color(0xff028090),
+          flexibleSpace: SafeArea(
+            child: Container(
+              height: MediaQuery.of(context).size.height * 95,
+              padding: const EdgeInsets.only(right: 16),
+              child: Row(
+                children: <Widget>[
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
                     },
-                    onDoubleTap: () {},
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Text(
-                            contact.displayName,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(
-                            height: 6,
-                          ),
-                          Text(
-                            "Status",
-                            style: TextStyle(color: Colors.white, fontSize: 10),
-                          ),
-                        ],
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 2,
+                  ),
+                  CircleAvatar(
+                    backgroundColor: Colors.black,
+                    minRadius: 20,
+                    maxRadius: 20,
+                    child: ClipOval(
+                        child: AspectRatio(
+                            aspectRatio: 1,
+                            child: SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CachedNetworkImage(imageUrl: otherURL)))),
+                  ),
+                  const SizedBox(
+                    width: 12,
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                                builder: (context) => OtherProfileView(
+                                    server: server, image: otherURL)));
+                      },
+                      onDoubleTap: () {},
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Text(
+                              contact.displayName,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(
+                              height: 6,
+                            ),
+                            Text(
+                              "Status",
+                              style: TextStyle(color: Colors.white, fontSize: 10),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // const Icon(
-                //   Icons.settings,
-                //   color: Colors.black54,
-                // ),
-              ],
+                  // const Icon(
+                  //   Icons.settings,
+                  //   color: Colors.black54,
+                  // ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 8,
-            child: Container(
-              child: Stack(
-                children: <Widget>[
-                  ChatMessageList(),
-                ],
+        body: Column(
+          children: [
+            Expanded(
+              flex: 8,
+              child: Container(
+                child: Stack(
+                  children: <Widget>[
+                    ChatMessageList(),
+                  ],
+                ),
               ),
             ),
-          ),
-          _imageUploadProvider.getViewState == ViewState.Loading
-              ? Container(
-                  alignment: Alignment.bottomRight,
-                  margin: EdgeInsets.only(right: 15),
-                  child: CustomprogressIndicator()
-                  //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
-                  )
-              : Container(),
+            _imageUploadProvider.getViewState == ViewState.Loading
+                ? Container(
+                  
+                    alignment: Alignment.bottomRight,
+                    margin: EdgeInsets.only(right: 15),
+                    child: CustomprogressIndicator()
+                    //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                    )
+                : Container(),
+              _imageDownloadProvider.getViewState == ViewState.Loading
+                ? SizedBox(
+                  // height: 50,
+                  // width: 50,
+                  child: Container(
+                      alignment: Alignment.bottomLeft,
+                      margin: EdgeInsets.only(left: 15,top: 3),
+                      child: LinearProgressIndicator(
+                      minHeight:2,
+                        backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      )
+                      // CustomprogressIndicator()
+                      //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                      ),
+                )
+                              : Container(),
 
-          // ignore: prefer_const_constructors
-          Container(
-            width: MediaQuery.of(context).size.width * 0.99,
-            decoration: BoxDecoration(
-              color: const Color(0xff536162),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Column(
-                      children: [
-                        ConstrainedBox(
-                            constraints: const BoxConstraints(
-                                maxHeight: 150.0, maxWidth: 300),
-                            child: textInput()),
-                      ],
+            // ignore: prefer_const_constructors
+            Container(
+              width: MediaQuery.of(context).size.width * 0.99,
+              decoration: BoxDecoration(
+                color: const Color(0xff536162),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        children: [
+                          ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                  maxHeight: 150.0, maxWidth: 300),
+                              child: textInput()),
+                        ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: InkWell(
-                          onTap: () {
-                            sendMessage();
-                          },
-                          child: Icon(
-                            Icons.send,
-                            color: Colors.white,
-                          )),
-                    ),
-                  )
-                ],
+                    Expanded(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: InkWell(
+                            onTap: () {
+                              sendMessage();
+                            },
+                            child: Icon(
+                              Icons.send,
+                              color: Colors.white,
+                            )),
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // textInput()
-        ],
+            // textInput()
+          ],
+        ),
       ),
     );
   }
@@ -454,22 +495,25 @@ class TileMessage extends StatelessWidget {
   final timing;
   final type;
   final imageUrl;
+  final size;
   TileMessage(
-      this.type, this.message, this.isSendByMe, this.timing, this.imageUrl);
+      this.type, this.size, this.message, this.isSendByMe, this.timing, this.imageUrl);
 
   bool isDownloading = false;
 
-  downloadImage(imgUrl) async {
+  downloadImage(imgUrl,_imageDownloadProvider) async {
+
     isDownloading = true;
     var now = new DateTime.now();
     var formatter = new DateFormat('yyyy-MM-dd');
     String formattedDate = formatter.format(now);
     print(formattedDate);
+    _imageDownloadProvider.setToLoading();
     bool downloaded =
         await StorageRepo().saveFile(imgUrl, formattedDate, message);
     var a = DateFormat.jm().format(DateTime.now());
     print(a);
-
+    _imageDownloadProvider.setToIdle();
     if (downloaded) {
       print("File Downloaded");
 
@@ -492,7 +536,8 @@ class TileMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // DateTime myDateTime = timing.toDate();
-
+  ImageDownloadProvider _imageDownloadProvider;
+   _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
     final date = DateTime.fromMillisecondsSinceEpoch(timing);
     final formattedDate = DateFormat.yMMMd().add_jm().format(date);
 
@@ -523,15 +568,15 @@ class TileMessage extends StatelessWidget {
                   // ignore: prefer_const_constructors
                   // ignore: deprecated_member_use
                   !isSendByMe
-                      ? RaisedButton(
+                      ?     RaisedButton(
                           // color: MyColors.buttoncolor,
                           onPressed: () {
-                            downloadImage(imageUrl);
+                            downloadImage(imageUrl,_imageDownloadProvider);
                           },
                           child: Icon(
                             Icons.file_download,
                           ))
-                      : Container(),
+                      :   Container(),
                   Padding(
                     padding: isSendByMe
                         ? const EdgeInsets.only(right: 5)
@@ -548,8 +593,8 @@ class TileMessage extends StatelessWidget {
         : type != "text" && type != "FileType.image"
             ? Container(
                 margin: isSendByMe
-                    ? const EdgeInsets.only(left: 110, top: 3)
-                    : const EdgeInsets.only(right: 110, top: 3),
+                    ? const EdgeInsets.only(left: 110, top:2)
+                    : const EdgeInsets.only(right: 110, top: 2),
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 width: MediaQuery.of(context).size.width * 0.7,
                 constraints: BoxConstraints(
@@ -606,31 +651,64 @@ class TileMessage extends StatelessWidget {
                           )),
                       // ignore: prefer_const_constructors
                       // ignore: deprecated_member_use
-                      !isSendByMe
-                          ? Container(
-                              width: double.maxFinite,
-                              child: RaisedButton(
-                                  color: MyColors.maincolor,
-                                  onPressed: () {
-                                    downloadImage(imageUrl);
-                                  },
-                                  child: Icon(
-                                    Icons.file_download,
-                                    color: Colors.white,
-                                  )),
-                            )
+                     Row(
+                   
+                            mainAxisAlignment: isSendByMe
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
+                       children: [
+                         Column(
+                           crossAxisAlignment: isSendByMe
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                           children: [
+                              Padding(
+                            padding: isSendByMe
+                                ? const EdgeInsets.only(right: 1 ,top:2 )
+                                : const EdgeInsets.only(left: 1,top:2),
+                            child: size!=null ?Text(
+                              size,
+                                textAlign:
+                                    isSendByMe ? TextAlign.end : TextAlign.left,
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 9)):
+                                    Container()
+                          ),
+                          // const SizedBox(height: 3),
+                          Padding(
+                            padding: isSendByMe
+                                ? const EdgeInsets.only(right: 1)
+                                : const EdgeInsets.only(left: 1),
+                            child: Text(formattedDate,
+                                textAlign:
+                                    isSendByMe ? TextAlign.end : TextAlign.left,
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 9)),
+                          ),
+
+                           ],
+                         ),
+                           !isSendByMe
+                          ? Padding(
+                            padding: const EdgeInsets.only(left :30),
+                            child: Container(
+                               
+                                child: RaisedButton(
+                                    color: MyColors.maincolor,
+                                    onPressed: () {
+                                      downloadImage(imageUrl,_imageDownloadProvider);
+                                    },
+                                    child: Icon(
+                                      Icons.file_download,
+                                      color: Colors.white,
+                                    )),
+                              ),
+                          )
                           : Container(),
-                      const SizedBox(height: 3),
-                      Padding(
-                        padding: isSendByMe
-                            ? const EdgeInsets.only(right: 5)
-                            : const EdgeInsets.only(left: 5),
-                        child: Text(formattedDate,
-                            textAlign:
-                                isSendByMe ? TextAlign.end : TextAlign.left,
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 9)),
-                      ),
+                         
+                       ],
+                     ),
+                      
                     ],
                   ),
                 ),
@@ -723,6 +801,7 @@ class ChatMessageList extends StatelessWidget {
               itemBuilder: (context, index) {
                 return TileMessage(
                     snapshot.data.docs[index].data()["type"],
+                      snapshot.data.docs[index].data()["size"],
                     snapshot.data.docs[index].data()["message"],
                     snapshot.data.docs[index].data()["sendBy"] == selfUid,
                     (snapshot.data.docs[index].data()["time"]),

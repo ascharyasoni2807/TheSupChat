@@ -7,14 +7,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:theproject/enum/view_state.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/bottomsheet.dart';
 import 'package:theproject/pages/previewImage.dart';
+import 'package:theproject/providers/imageuploadprovider.dart';
 import 'package:theproject/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theproject/pages/home_page.dart';
 import 'package:theproject/repos/storage_repo.dart';
 import 'package:theproject/theme.dart';
+import 'package:theproject/widgets/cirindi.dart';
 
 
 class ProfilePage extends StatefulWidget {
@@ -31,6 +35,7 @@ class _ProfilePageState extends State<ProfilePage> {
   var nameofuser;
   var phoneNumberuser;
   Directory appDocDir;
+ ImageUploadProvider _imageUploadProvider;
 
   var userPhotos;
   Future<void> getPhoto() async {
@@ -81,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       print('completed cropping');
 
-      await StorageRepo().uploadPic(_image);
+      await StorageRepo().uploadPic(_image, _imageUploadProvider);
 
       print("completed upload");
       setState(() {
@@ -93,6 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
 
   Widget _buildPopupDialog(BuildContext context, image) {
+
   return Center(
     child: GestureDetector(
       onTap:(){
@@ -123,6 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+     _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
     return Scaffold(
       appBar: AppBar(
          
@@ -131,182 +138,196 @@ class _ProfilePageState extends State<ProfilePage> {
         height: double.infinity,
         width: double.infinity,
         color: Colors.white,
-        child: SingleChildScrollView(
-          child: Column(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
     
-            children: [
-              Stack(children: [
-                // Container(
-                //   height: MediaQuery.of(context).size.height * 0.22,
-                //   decoration: BoxDecoration(
-                //     color: Color(0xff028090),
-                //     borderRadius: BorderRadius.only(
-                //       bottomLeft: Radius.circular(80.0),
-                //       bottomRight: Radius.circular(80.0),
-                //     ),
-                //   ),
-                // ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Stack(children: [
-                        GestureDetector(
-                          onTap:() {showDialog(
-                    
-                    barrierColor: Colors.black.withOpacity(0.5),
-                    context: context,
-                    builder: (BuildContext context) =>
-                        _buildPopupDialog(context, userPhotos),
-                  );},
-                          child: CircleAvatar(
-                            
-                            radius: 80,
-                            backgroundColor: Colors.black,
-                            child: ClipOval(
-                              
-                              child: AspectRatio(
-                                aspectRatio: 1,
-                                child: SizedBox(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    child: isCompleted
-                                        ? (userPhotos != null)
-                                            ? CachedNetworkImage(
-                                                imageUrl: userPhotos,
-                                                progressIndicatorBuilder:
-                                                    (context, url,
-                                                            downloadProgress) =>
-                                                        CircularProgressIndicator( strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                                            value:
-                                                                downloadProgress
-                                                                    .progress),
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        Icon(Icons.error),
-                                              )
+                children: [
+                  Stack(children: [
+                      
+                    // Container(
+                    //   height: MediaQuery.of(context).size.height * 0.22,
+                    //   decoration: BoxDecoration(
+                    //     color: Color(0xff028090),
+                    //     borderRadius: BorderRadius.only(
+                    //       bottomLeft: Radius.circular(80.0),
+                    //       bottomRight: Radius.circular(80.0),
+                    //     ),
+                    //   ),
+                    // ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(children: [
+                            GestureDetector(
+                              onTap:() {showDialog(
+                        
+                        barrierColor: Colors.black.withOpacity(0.5),
+                        context: context,
+                        builder: (BuildContext context) =>
+                            _buildPopupDialog(context, userPhotos),
+                      );},
+                              child: CircleAvatar(
+                                
+                                radius: 80,
+                                backgroundColor: Colors.black,
+                                child: ClipOval(
+                                  
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: SizedBox(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        child: isCompleted
+                                            ? (userPhotos != null)
+                                                ? CachedNetworkImage(
+                                                    imageUrl: userPhotos,
+                                                    progressIndicatorBuilder:
+                                                        (context, url,
+                                                                downloadProgress) =>
+                                                            CircularProgressIndicator( strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                                value:
+                                                                    downloadProgress
+                                                                        .progress),
+                                                    errorWidget:
+                                                        (context, url, error) =>
+                                                            Icon(Icons.error),
+                                                  )
 
-                                            //  Image.network(
-                                            //  userPhotos,
-                                            //   fit: BoxFit.fill,
-                                            // )
-                                            : CircularProgressIndicator
-                                                .adaptive()
-                                        : CircularProgressIndicator.adaptive(
-                                          strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        )),
+                                                //  Image.network(
+                                                //  userPhotos,
+                                                //   fit: BoxFit.fill,
+                                                // )
+                                                : CircularProgressIndicator
+                                                    .adaptive()
+                                            : CircularProgressIndicator.adaptive(
+                                              strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            )),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: getImage,
-                          child: Padding(
-                              padding: EdgeInsets.only(top: 110.0, left: 111.0),
-                              child: new Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  new CircleAvatar(
-                                    backgroundColor: MyColors.maincolor,
-                                    radius: 20.0,
-                                    child: new Icon(
-                                      Icons.camera_alt,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                ],
-                              )),
-                        ),
-                      ]),
-                    ],
-                  ),
-                ),
-              ]),
-              SizedBox(height:20),
-              Container(
-                width: MediaQuery.of(context).size.width * 0.75,
-                height: 60,
-                child: Card(
-                color: Color(0xff028090),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.people_alt,
-                      color: Colors.white,
-                    ),
-                    trailing: InkWell(
-                      splashColor: Colors.transparent,
-                      child: Icon(
-                        Icons.edit,
-                        color: Colors.white,
+                            GestureDetector(
+                              onTap: getImage,
+                              child: Padding(
+                                  padding: EdgeInsets.only(top: 110.0, left: 111.0),
+                                  child: new Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      new CircleAvatar(
+                                        backgroundColor: MyColors.maincolor,
+                                        radius: 20.0,
+                                        child: new Icon(
+                                          Icons.camera_alt,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    ],
+                                  )),
+                            ),
+                          ]),
+                        ],
                       ),
-                      onTap: () {
-                        print("name changinng");
-                        showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: false,
-                            builder: (context) => SingleChildScrollView(
-                                    child: Container(
-                                  child: Container(child: BottomSheetExample()),
-                                )));
-                      },
                     ),
-                    title: Row(
-                      // crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Flexible(
-                            child: Text("$nameofuser",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.white)))
-                      ],
+                  ]),
+                  SizedBox(height:20),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    height: 60,
+                    child: Card(
+                    color: Color(0xff028090),
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.people_alt,
+                          color: Colors.white,
+                        ),
+                        trailing: InkWell(
+                          splashColor: Colors.transparent,
+                          child: Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                          ),
+                          onTap: () {
+                            print("name changinng");
+                            showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: false,
+                                builder: (context) => SingleChildScrollView(
+                                        child: Container(
+                                      child: Container(child: BottomSheetExample(imageUploadProvider: _imageUploadProvider)),
+                                    )));
+                          },
+                        ),
+                        title: Row(
+                          // crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Flexible(
+                                child: Text("$nameofuser",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        color: Colors.white)))
+                          ],
+                        ),
+                        // subtitle: Text("Your Name ",
+                        //     style: TextStyle(color: Colors.grey)),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      elevation: 5,
+                     
                     ),
-                    // subtitle: Text("Your Name ",
-                    //     style: TextStyle(color: Colors.grey)),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    height: 60,
+                    child: Card(
+                     color: Color(0xff028090),
+                      child: ListTile(
+                        leading:   Icon(Icons.phone,color: Colors.white,),
+                        title:   Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Flexible(
+                              child: Text("$phoneNumberuser",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: Colors.white)))
+                        ],
+                      ),
+                      ),
+                       shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      elevation: 5,
+                    ),
                   ),
-                  elevation: 5,
-                 
-                ),
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Container(
+                        child: Text(
+                            "Your profile is end-to-end encrypted.  Your profile and changes will be visible to your contacts.",style: TextStyle(color: Colors.grey[500],fontSize: 12),)),
+                  ),
+            
+                ],
               ),
-              Container(
-                width: MediaQuery.of(context).size.width * 0.75,
-                height: 60,
-                child: Card(
-                 color: Color(0xff028090),
-                  child: ListTile(
-                    leading:   Icon(Icons.phone,color: Colors.white,),
-                    title:   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Flexible(
-                          child: Text("$phoneNumberuser",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: Colors.white)))
-                    ],
-                  ),
-                  ),
-                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  elevation: 5,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Container(
-                    child: Text(
-                        "Your profile is end-to-end encrypted.  Your profile and changes will be visible to your contacts.",style: TextStyle(color: Colors.grey[500],fontSize: 12),)),
-              ),
-        
-            ],
-          ),
+            ),
+            _imageUploadProvider.getViewState == ViewState.Loading
+              ? Container(
+                
+                  alignment: Alignment.center,
+                  margin: EdgeInsets.only(right: 15),
+                  child: CustomprogressIndicator()
+                  //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                  )
+              : Container(),
+          ],
         ),
       ),
     );

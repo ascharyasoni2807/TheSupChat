@@ -27,13 +27,16 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
  String downloadUrl;
  
  
- Future uploadPic(File file ) async {
+ Future uploadPic(File file,ImageUploadProvider _imageUploadProvider ) async {
  String a;
- 
+
+
  profileImage = file;
  print(file);
  var user = await _auth.currentUser;
   print(a);
+
+ _imageUploadProvider.setToLoading();
   if (file!=null){
     firebase_storage.Reference reference =
         firebase_storage.FirebaseStorage.instance.ref().child("user/profiles/${user.uid}");
@@ -57,7 +60,7 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
         "profilePicture" : downloadUrl.toString()
       });
   DatabaseMethods().updateProfilePictureinRTDB(user.uid, downloadUrl);
-
+ _imageUploadProvider.setToIdle();
   return downloadUrl;
  }
 
@@ -99,16 +102,7 @@ _imageUploadProvider.setToLoading();
    imageurl = startUpload(reference);
   }
  return imageurl;
-//     firebase_storage.UploadTask uploadTask = reference.putFile(file);
-//     firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() =>  print('complete'));
-   
-//     imageurl  = await taskSnapshot.ref.getDownloadURL();
-//     print(uploadTask.snapshot); 
-//  _imageUploadProvider.setToIdle();
-//     return imageurl;
  
-  
-    //  _scaffoldKey.currentState.showSnackBar( SnackBar(content: Text("Profile Pic updated")));  
  }
 
 

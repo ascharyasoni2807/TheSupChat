@@ -184,7 +184,7 @@ class DatabaseMethods {
     }
   }
 
-  addConvMessage(otherphone, messageMap, serveruid, othermessageMap) async {
+  addConvMessage(otherphone, messageMap, serveruid, ) async {
     var user = _auth.currentUser;
     var phoneNumber = user.phoneNumber.toString();
 
@@ -225,7 +225,7 @@ class DatabaseMethods {
     });
   }
 
-  addImageConvMessage(otherPhone, messageMap, serveruid, othermessageMap) {
+  addImageConvMessage(otherPhone, messageMap, serveruid, ) {
     // ImageUploadProvider _imageUploadProvider;
     print(_auth.currentUser.phoneNumber);
     var user = _auth.currentUser;
