@@ -133,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
          
-          backgroundColor: Color(0xff028090), title: Text('Profile Info')),
+          backgroundColor: Color(0xff028090), title: Text('Profile Info',style: TextStyle(fontSize: 16),)),
       body: Container(
         height: double.infinity,
         width: double.infinity,
@@ -252,12 +252,15 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           onTap: () {
                             print("name changinng");
+                            TextEditingController nameofuser = TextEditingController();
+                     
                             showModalBottomSheet(
+                                
                                 context: context,
                                 isScrollControlled: false,
                                 builder: (context) => SingleChildScrollView(
                                         child: Container(
-                                      child: Container(child: BottomSheetExample(imageUploadProvider: _imageUploadProvider)),
+                                      child: Container(child: BottomSheetExample(imageUploadProvider: _imageUploadProvider,nameofuser: nameofuser,)),
                                     )));
                           },
                         ),
@@ -269,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 child: Text("$nameofuser",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 18,
+                                        fontSize: 16,
                                         color: Colors.white)))
                           ],
                         ),
@@ -297,7 +300,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               child: Text("$phoneNumberuser",
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       color: Colors.white)))
                         ],
                       ),

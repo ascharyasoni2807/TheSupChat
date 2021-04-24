@@ -191,7 +191,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                         GestureDetector(
                           onTap: getImage,
                           child: Padding(
-                              padding: EdgeInsets.only(top: 95.0, left: 95.0),
+                              padding: EdgeInsets.only(top: 110.0, left: 110.0),
                               child: new Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
@@ -232,12 +232,14 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                       ),
                       onTap: () {
                         print("name changinng");
+                        TextEditingController nameofuser = TextEditingController();
+                        ImageUploadProvider imageUploadProvider;
                         showModalBottomSheet(
                             context: context,
                             isScrollControlled: false,
                             builder: (context) => SingleChildScrollView(
                                     child: Container(
-                                  child: Container(child: BottomSheetExample()),
+                                  child: Container(child: BottomSheetExample(imageUploadProvider:imageUploadProvider,nameofuser:nameofuser)),
                                 )));
                       },
                     ),
@@ -306,11 +308,15 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
         elevation: 10,
         onPressed: () async {
           print("Hello World");
+          if (nameofuser.toString().isNotEmpty){
           print(widget.user.phoneNumber);
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => HomePage()),
               (Route<dynamic> route) => false);
-        },
+        }else {
+          print('retry');
+        }
+        }
       ),
     );
   }

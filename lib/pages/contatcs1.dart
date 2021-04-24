@@ -57,6 +57,7 @@ class _ContactsPageState extends State<ContactsPage> {
       "phoneNumber" : server["phoneNumber"].toString(),
       "uid":server["uid"],
       "time" : DateTime.now().millisecondsSinceEpoch,
+      "lastMessage": '',
       "profilePicture" : server["profilePicture"].toString(),
     };
     print(users.reversed.toList());
@@ -119,6 +120,8 @@ class _ContactsPageState extends State<ContactsPage> {
         
           print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
           print(value);
+          // learnt new thing
+           foundusers.sort((a,b) => a['phoneData'].displayName.compareTo(b['phoneData'].displayName));
         }
       });
     });

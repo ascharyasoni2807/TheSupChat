@@ -7,9 +7,10 @@ import 'package:theproject/theme.dart';
 
 class BottomSheetExample extends StatelessWidget {
   
-  TextEditingController nameofuser = TextEditingController();
+
   var imageUploadProvider;
-  BottomSheetExample({this.imageUploadProvider});
+  final nameofuser;
+  BottomSheetExample({this.imageUploadProvider,this.nameofuser});
   
   @override
   Widget build(BuildContext context) {
@@ -27,6 +28,7 @@ class BottomSheetExample extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
       TextField(
+        maxLength: 12,
         decoration: InputDecoration(
     hintText: "Enter Name...",
      ),
@@ -46,14 +48,14 @@ class BottomSheetExample extends StatelessWidget {
             DatabaseMethods().saveName(nameofuser.value.text);
             print(nameofuser.value.text);
             // print( nameofuser.value.text.split());
-            if( nameofuser.value.text.trim().toString().isNotEmpty){
+            if(nameofuser.value.text.trim().toString().isNotEmpty){
                      print("udruththdhtdhjtdj");
                               await DatabaseMethods().updateNameofuser(nameofuser.value.text);
-                              imageUploadProvider.setToIdle();   
+                                imageUploadProvider.setToIdle(); 
                               Navigator.pop(context);
                   
             }else{
-              
+                imageUploadProvider.setToIdle(); 
                               print("nothing");
             }
              print("hello");

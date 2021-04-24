@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:intl/intl.dart';
 import 'package:theproject/repos/customfunctions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -56,26 +57,32 @@ class _HomePageState extends State<HomePage> {
     //  getContacts();
     // ContactPermission().permissioncheck(context);
     // getUserInfo();
- 
+    chatroomstream = FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber))
+        .collection("ListUsers")
+        .orderBy("time", descending: true)
+        .snapshots();
+
     getContacts();
-   
-      super.initState();
+
+    super.initState();
     // getContacts();
-    
   }
 
-  final foundusers = [];
+  Map hashmap;
+  List foundusers = [];
   final phonenumber = [];
-
+  String selfPhone;
   getContacts() async {
     final Iterable<Contact> contacts = await ContactsService.getContacts(
       withThumbnails: false,
     );
     var user = _auth.currentUser;
-    var selfPhone = CustomFunctions().shortPhoneNumber(user.phoneNumber);
+    selfPhone = CustomFunctions().shortPhoneNumber(user.phoneNumber);
 
     // final contacts =  _contacts.toList();
-    Map hashmap = Map();
+    hashmap = Map();
 
     contacts.forEach((element) {
       element.phones.forEach((_element) {
@@ -85,139 +92,116 @@ class _HomePageState extends State<HomePage> {
       phonenumber.addAll(element.phones
           .map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
     });
- var listenvalue;
-    FirebaseFirestore.instance
-        .collection("ChatRoom")
-        .doc(selfPhone)
-        .collection("ListUsers")
-        .orderBy("time", descending: true)
-        .snapshots()
-        .listen((result) {
-          print(result.docs.toList().iterator);
-          listenvalue = FirebaseFirestore.instance
-        .collection("ChatRoom")
-        .doc(selfPhone)
-        .collection("ListUsers")
-        .orderBy("time")
-        .snapshots();
-       setState(() {
-           chatroomstream = listenvalue;
-           isbuilding = true;
-        });
-       
-      }); 
-       
-     FirebaseFirestore.instance
-        .collection("ChatRoom/$selfPhone/ListUsers")
-        .orderBy("time", descending: true)
-        .snapshots()
-        .listen((QuerySnapshot querySnapshot) {
-      querySnapshot.docs.forEach((result)async {
-        // print(result.data());
-        final Map value = result.data();
-
-        bool a = phonenumber.contains(value['chatroomIdWithCountry']);
-        bool b = phonenumber.contains(value['phoneNumber']);
-         var allProfilePic;
-            allProfilePic = await DatabaseMethods().getPhotoUrlofanyUser(value["uid"]);
-        setState(() {
-        });
-     
-        if (phonenumber.contains(value['phoneNumber']) ||
-            phonenumber.contains(value['chatroomIdWithCountry'])) {
-          print(value['chatroomIdWithCountry']);
-          print(value['phoneNumber']);
-          print(a);
-          print(b);
-          foundusers.add({
-            "serverData": value,
-            "profilePicture" : allProfilePic,
-            "phoneData": a
-                ? hashmap[value['chatroomIdWithCountry']]
-                : hashmap[value['phoneNumber']]
-          });
-          print(value);
-        }
-      });
-    });
-
-  //  setState(() {
-  //    isbuilding=true;
-  //  });
-
   }
 
-  // getUserInfo() async {
-  //   print('heeloji');
-  //   var user = _auth.currentUser;
-  //   var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
- 
-  // }
-   @override
- void dispose() { 
-   
-   super.dispose();
- }
+  values(QuerySnapshot querySnapshot) async {
+    final _foundusers = [];
+    for (int i = 0, len = querySnapshot?.docs?.length; i < len; i++) {
+      final result = querySnapshot?.docs[i];
+      final Map value = result.data();
+
+      bool a = phonenumber.contains(value['chatroomIdWithCountry']);
+      bool b = phonenumber.contains(value['phoneNumber']);
+      var allProfilePic;
+      allProfilePic =
+          await DatabaseMethods().getPhotoUrlofanyUser(value["uid"]);
+
+      if (phonenumber.contains(value['phoneNumber']) ||
+          phonenumber.contains(value['chatroomIdWithCountry'])) {
+        print(value['chatroomIdWithCountry']);
+        print(value['phoneNumber']);
+        print(a);
+        print(b);
+        _foundusers.add({
+          "serverData": value,
+          "profilePicture": allProfilePic,
+          "phoneData": a
+              ? hashmap[value['chatroomIdWithCountry']]
+              : hashmap[value['phoneNumber']]
+        });
+        print(value);
+        print(_foundusers);
+      }
+    }
+
+    return _foundusers;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   Widget chatRoomList() {
-    return foundusers != null
-        ? isbuilding
-            ? StreamBuilder<QuerySnapshot>(
-                stream: chatroomstream,
-                builder: (BuildContext context,
-                    AsyncSnapshot<QuerySnapshot> snapshot) {
-                  return snapshot.hasData
-                      ? SingleChildScrollView(
-                          physics: BouncingScrollPhysics(),
-                          child: Column(
-                            children: [
-                              ListView.builder(
-                                  physics: NeverScrollableScrollPhysics(),
-                                  // scrollDirection: Axis.vertical,
-                                  shrinkWrap: true,
-                                  itemCount: foundusers.length,
-                                  itemBuilder: (context, index) {
-                                    final _contact =
-                                        foundusers.elementAt(index);
-                                    Contact contact = _contact["phoneData"];
-                                    final serverData = _contact["serverData"];
-                                    final imageurl = _contact["profilePicture"];
-                                    return Column(
-                                      children: [
-                                        Chatroomtile(
-                                            userName:
-                                                contact?.displayName ?? contact.phones.first,
-                                            // .replaceAll("_", ""),
-                                            // .replaceAll(Constants.myName, ''),
-                                            server: serverData,
-                                            contact: contact,
-                                               
-                                            image:
-                                                imageurl),
-                                        Container(
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          margin: EdgeInsets.only(left: 90),
-                                          decoration: BoxDecoration(
-                                            color: Colors.yellow,
-                                            border: Border(
-                                              bottom: BorderSide(
-                                                  color: Colors.grey, width: 1),
+    return StreamBuilder<QuerySnapshot>(
+        stream: chatroomstream,
+        
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          return snapshot.hasData && snapshot.data.docs.isNotEmpty
+              ? FutureBuilder(
+                  future: values(snapshot.data),
+                  builder: (context, snap) {
+                    return snap.hasData
+                        ? SingleChildScrollView(
+                            physics: BouncingScrollPhysics(),
+                            child: Column(
+                              children: [
+                                ListView.builder(
+                                    physics: NeverScrollableScrollPhysics(),
+                                    // scrollDirection: Axis.vertical,
+                                    shrinkWrap: true,
+                                    itemCount: snap?.data?.length,
+                                    itemBuilder: (context, index) {
+                                      final _contact =
+                                          snap.data?.elementAt(index);
+                                      Contact contact = _contact["phoneData"];
+                                      final serverData = _contact["serverData"];
+                                      final imageurl =
+                                          _contact["profilePicture"];
+                                      return Column(
+                                        children: [
+                                          Chatroomtile(
+                                              userName: contact?.displayName ??
+                                                  contact.phones.first,
+                                              // .replaceAll("_", ""),
+                                              // .replaceAll(Constants.myName, ''),
+                                              server: serverData,
+                                              contact: contact,
+                                              image: imageurl),
+                                          Container(
+                                            width: MediaQuery.of(context)
+                                                .size
+                                                .width,
+                                            margin: EdgeInsets.only(left: 90),
+                                            decoration: BoxDecoration(
+                                              color: Colors.yellow,
+                                              border: Border(
+                                                bottom: BorderSide(
+                                                    color: Colors.grey,
+                                                    width: 1),
+                                              ),
                                             ),
-                                          ),
-                                        )
-                                      ],
-                                    );
-                                  }),
-                            ],
-                          ),
-                        )
+                                          )
+                                        ],
+                                      );
+                                    }),
+                              ],
+                            ),
+                          )
+                        : Center(child: CustomprogressIndicator());
+                  })
 
-                      // ignore: prefer_const_constructors
-                      : Center(child: CustomprogressIndicator());
-                })
-            : Center(child: CustomprogressIndicator())
-        : Center(child: CustomprogressIndicator());
+              : Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Happy to see you here. \n Start messaging.',style: TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.center,),
+                ],
+              );
+        });
+    //     : Center(child: CustomprogressIndicator())
+    // : Center(child: CustomprogressIndicator());
   }
 
   newstateup() async {
@@ -235,12 +219,15 @@ class _HomePageState extends State<HomePage> {
                 "Chats",
                 style: TextStyle(color: Colors.white),
               ),
-              backgroundColor:Color(0xff028090),
+              backgroundColor: Color(0xff028090),
               actions: [
                 Container(
                     padding: EdgeInsets.symmetric(horizontal: 2),
                     child: IconButton(
-                      icon: Icon(Icons.logout,color: Colors.white,),
+                      icon: Icon(
+                        Icons.logout,
+                        color: Colors.white,
+                      ),
                       onPressed: () {
                         loginStore.signOut(context);
 
@@ -250,20 +237,22 @@ class _HomePageState extends State<HomePage> {
                 Container(
                     padding: EdgeInsets.symmetric(horizontal: 0),
                     child: IconButton(
-                        icon: Icon(Icons.face_retouching_natural,color: Colors.white,),
+                        icon: Icon(
+                          Icons.face_retouching_natural,
+                          color: Colors.white,
+                        ),
                         onPressed: () {
                           // loginStore.signOut(context);
                           Navigator.push(
                               context,
                               CupertinoPageRoute(
-                                
-                                
                                   builder: (context) => ProfilePage()));
                           print("profile");
                         }))
               ]),
           body: Container(
             child: Center(child: ListView(children: [chatRoomList()])),
+          
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
@@ -317,12 +306,12 @@ Widget _buildPopupDialog(BuildContext context, image, name) {
 
 class Chatroomtile extends StatelessWidget {
   final String userName;
-  final  server;
+  final server;
   final contact;
 
   var image;
 
-  Chatroomtile({this.userName, this.server,this.contact, this.image});
+  Chatroomtile({this.userName, this.server, this.contact, this.image});
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -330,8 +319,8 @@ class Chatroomtile extends StatelessWidget {
         print(contact.displayName);
         print("innnnnnn");
         Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return ChatScreen(server: server, contact: contact);
-      }));
+          return ChatScreen(server: server, contact: contact, image: image);
+        }));
       },
       onDoubleTap: () {
         print("null");
@@ -342,7 +331,6 @@ class Chatroomtile extends StatelessWidget {
         leading: image != null
             ? GestureDetector(
                 onTap: () {
-             
                   print("opening image");
                   showDialog(
                     // barrierColor: Colors.black.withOpacity(0.5),
@@ -376,26 +364,53 @@ class Chatroomtile extends StatelessWidget {
                 ),
               )
             : CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.black,
-                  child: ClipOval(
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: SizedBox(
-                          height: 50,
-                          width: 50,
-                          child: Image.asset('assets/img/pp.png')),
-                    ),
+                radius: 30,
+                backgroundColor: Colors.black,
+                child: ClipOval(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: SizedBox(
+                        height: 50,
+                        width: 50,
+                        child: Image.asset('assets/img/pp.png')),
                   ),
                 ),
-        title: Text(
-          userName,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+        title: Row(
+           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              userName,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            Text(DateFormat.yMMMd()
+                    .format(DateTime.fromMillisecondsSinceEpoch(server['time'])
+                    ),style: TextStyle(fontSize: 11,color: Colors.black),
+                    )
+          ],
         ),
 
-        subtitle: Text(
-          "Last Mesaage Line",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top:10.0),
+          child: Row(
+            
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+  server['lastMessage']!=null? ( server['lastMessage'].toString().length>24)?Text(
+                server['lastMessage'].toString().substring(0,24)+'...',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,color: Colors.grey),
+              ): Text(
+                server['lastMessage'].toString(),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,color: Colors.grey),
+              )
+              :Container(),
+
+              Text(DateFormat.jm()
+                    .format(DateTime.fromMillisecondsSinceEpoch(server['time'])
+                    ),style: TextStyle(fontSize: 11,color: Colors.black),
+                    )
+            ],
+          ),
         ),
       ),
     );

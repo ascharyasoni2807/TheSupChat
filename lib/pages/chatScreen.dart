@@ -32,7 +32,8 @@ import 'package:theproject/pages/previewImage.dart';
 class ChatScreen extends StatefulWidget {
   final server;
   final contact;
-  ChatScreen({this.server, this.contact});
+  final image;
+  ChatScreen({this.server, this.contact, this.image});
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
@@ -159,6 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
       "imageUrl": url.toString(),
       "sendBy": selfUid,
       "message": basenames.toString(),
+      "lastmessage": basenames.toString(),
       "time": DateTime.now().millisecondsSinceEpoch,
       "type": fileType.toString(),
       "size": sizes,
@@ -174,13 +176,13 @@ class _ChatScreenState extends State<ChatScreen> {
         .addImageConvMessage(server["phoneNumber"], imagedetailMap,
             server["uid"], )
         .then(() {
-      updatetime();
+      updatetime(basenames.toString(),);
     });
     // GradientSnackBar.showError(context,"Image sent");
     print("Dedoneee");
   }
 
-  updatetime() async {
+  updatetime(a) async {
     var selfphoneNumber =
         CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber);
     await FirebaseFirestore.instance
@@ -195,6 +197,24 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection('ListUsers')
         .doc(server["uid"] + "_" + _auth.currentUser.uid)
         .update({'time': DateTime.now().millisecondsSinceEpoch});
+
+    await FirebaseFirestore.instance
+        .collection('ChatRoom')
+        .doc(selfphoneNumber)
+        .collection('ListUsers')
+        .doc((_auth.currentUser.uid + "_" + server["uid"]).toString())
+        .update({'lastMessage':a}); 
+
+     await FirebaseFirestore.instance
+        .collection('ChatRoom')
+        .doc(server["phoneNumber"])
+        .collection('ListUsers')
+        .doc(server["uid"] + "_" + _auth.currentUser.uid)
+        .update({'lastMessage': a});       
+
+ 
+
+
   }
 
   sendMessage() async {
@@ -203,6 +223,7 @@ class _ChatScreenState extends State<ChatScreen> {
       Map<String, dynamic> messageMap = {
         "message": messagetext.text.toString().trim(),
         "sendBy": selfUid,
+        "lastmessage": messagetext.text.toString().trim(),
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
@@ -216,7 +237,7 @@ class _ChatScreenState extends State<ChatScreen> {
           .addConvMessage(
               server["phoneNumber"], messageMap, server["uid"], )
           .then((value) async {
-        updatetime();
+        updatetime(messagetext.text.toString().trim(),);
       });
       messagetext.text = '';
     } else {
@@ -314,12 +335,8 @@ class _ChatScreenState extends State<ChatScreen> {
 //         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomePage()), (Route<dynamic> route) => false);
 
 //       },
-    return WillPopScope(
-       onWillPop: (){
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomePage()), (Route<dynamic> route) => false);
 
-      },
-          child: Scaffold(
+    return  Scaffold(
         appBar: AppBar(
           elevation: 0,
           automaticallyImplyLeading: false,
@@ -352,7 +369,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CachedNetworkImage(imageUrl: otherURL)))),
+                                child: CachedNetworkImage(imageUrl: widget.image!=null?widget.image : server['profilePicture'])))),
                   ),
                   const SizedBox(
                     width: 12,
@@ -484,8 +501,8 @@ class _ChatScreenState extends State<ChatScreen> {
             // textInput()
           ],
         ),
-      ),
-    );
+      );
+    
   }
 }
 
@@ -540,6 +557,8 @@ class TileMessage extends StatelessWidget {
    _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
     final date = DateTime.fromMillisecondsSinceEpoch(timing);
     final formattedDate = DateFormat.yMMMd().add_jm().format(date);
+    String time = DateFormat.jm().format(date);   
+    print(time);
 
     return type != null && type == "FileType.image"
         ? GestureDetector(
