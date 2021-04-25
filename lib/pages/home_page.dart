@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
   LoginStore loginStore = LoginStore();
   List users = [];
   FirebaseFirestore firestoreInstance = FirebaseFirestore.instance;
-
+ 
   // listalluser() async {
   //   firestoreInstance
   //       .collection("users")
@@ -84,7 +84,7 @@ class _HomePageState extends State<HomePage> {
     // final contacts =  _contacts.toList();
     hashmap = Map();
 
-    contacts.forEach((element) {
+   await contacts.forEach((element) {
       element.phones.forEach((_element) {
         hashmap[_element.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")] =
             element;
@@ -162,7 +162,7 @@ class _HomePageState extends State<HomePage> {
                                         children: [
                                           Chatroomtile(
                                               userName: contact?.displayName ??
-                                                  contact.phones.first,
+                                                  contact?.phones?.first,
                                               // .replaceAll("_", ""),
                                               // .replaceAll(Constants.myName, ''),
                                               server: serverData,
@@ -308,10 +308,12 @@ class Chatroomtile extends StatelessWidget {
   final String userName;
   final server;
   final contact;
-
+  var isSelected = false;
   var image;
-
+   
   Chatroomtile({this.userName, this.server, this.contact, this.image});
+  
+  
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -326,10 +328,12 @@ class Chatroomtile extends StatelessWidget {
         print("null");
       },
       child: ListTile(
+        // selected: isSelected,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         // separatorBuilder: (BuildContext context, int index) => Divider(height: 1),
         leading: image != null
             ? GestureDetector(
+              
                 onTap: () {
                   print("opening image");
                   showDialog(
@@ -350,7 +354,7 @@ class Chatroomtile extends StatelessWidget {
                           width: 50,
                           child: (image != null)
                               ? CachedNetworkImage(
-                                  imageUrl: image,
+                                  imageUrl: image ?? "",
                                   progressIndicatorBuilder:
                                       (context, url, downloadProgress) =>
                                           CircularProgressIndicator(
@@ -380,12 +384,12 @@ class Chatroomtile extends StatelessWidget {
            mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              userName,
+              userName ?? "",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-            Text(DateFormat.yMMMd()
+            Text(server['time'] != null ? DateFormat.yMMMd()
                     .format(DateTime.fromMillisecondsSinceEpoch(server['time'])
-                    ),style: TextStyle(fontSize: 11,color: Colors.black),
+                    ): "",style: TextStyle(fontSize: 11,color: Colors.black),
                     )
           ],
         ),

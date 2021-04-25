@@ -27,13 +27,25 @@ import 'package:theproject/theme.dart';
 import 'package:theproject/widgets/cachedImage.dart';
 import 'package:theproject/widgets/cirindi.dart';
 import 'package:theproject/pages/previewImage.dart';
+import 'package:theproject/widgets/alertdialog.dart';
+
+import '../firebasestorage/databsemethods.dart';
+import '../theme.dart';
 // import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
   final server;
   final contact;
   final image;
-  ChatScreen({this.server, this.contact, this.image});
+  final selfchatRoomMap;
+  final secondchatRoomMap;
+  ChatScreen({
+    this.server,
+    this.contact,
+    this.image,
+    this.selfchatRoomMap,
+    this.secondchatRoomMap,
+  });
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
@@ -75,7 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
     String url = await StorageRepo()
         .uploadChatPic(files, otherUid, filename, _imageUploadProvider);
 
-    sendImage(url, filetype, filename,sizes);
+    sendImage(url, filetype, filename, sizes);
   }
 
   showAttachmentBottomSheet(context) {
@@ -133,53 +145,49 @@ class _ChatScreenState extends State<ChatScreen> {
     FilePickerResult file = await FilePicker.platform.pickFiles(type: fileType);
     print(fileType);
     File files = File(file.files.single.path);
-  
-    
-      var fs = filesize(files.lengthSync());
 
+    var fs = filesize(files.lengthSync());
 
     String sizes = fs;
-   
+
     String basenames = file.files.single.name;
     print('a');
 
     Navigator.pop(context);
-    String url = await StorageRepo()
-        .uploadChatPic(files, otherUid, basenames, _imageUploadProvider,);
+    String url = await StorageRepo().uploadChatPic(
+      files,
+      otherUid,
+      basenames,
+      _imageUploadProvider,
+    );
     print(url);
 
     // chatBloc.dispatch(SendAttachmentEvent(chat.chatId,file,fileType));
-    sendImage(url, fileType, basenames,sizes);
+    sendImage(url, fileType, basenames, sizes);
     print(file.paths);
 
     // GradientSnackBar.showMessage(context, 'Sending attachment..');
   }
 
-  sendImage(url, fileType, basenames,sizes) async {
+  sendImage(url, fileType, basenames, sizes) async {
     Map<String, dynamic> imagedetailMap = {
       "imageUrl": url.toString(),
       "sendBy": selfUid,
       "message": basenames.toString(),
-      "lastmessage": basenames.toString(),
+      // "lastmessage": basenames.toString(),
       "time": DateTime.now().millisecondsSinceEpoch,
       "type": fileType.toString(),
       "size": sizes,
     };
-    // Map<String, dynamic> othermessageMap = {
-    //   "message": messagetext.text,
-    //   "sendBy": otherUid,
-    //   "time": DateTime.now().millisecondsSinceEpoch,
-    //   "type": "text",
-    //   "size": sizes,
-    // };
+    updatetime(basenames.toString().trim());
+
     DatabaseMethods()
-        .addImageConvMessage(server["phoneNumber"], imagedetailMap,
-            server["uid"], )
-        .then(() {
-      updatetime(basenames.toString(),);
-    });
-    // GradientSnackBar.showError(context,"Image sent");
-    print("Dedoneee");
+        .addImageConvMessage(
+          server["phoneNumber"],
+          imagedetailMap,
+          server["uid"],
+        )
+        .then((value) {});
   }
 
   updatetime(a) async {
@@ -190,54 +198,59 @@ class _ChatScreenState extends State<ChatScreen> {
         .doc(selfphoneNumber)
         .collection('ListUsers')
         .doc((_auth.currentUser.uid + "_" + server["uid"]).toString())
-        .update({'time': DateTime.now().millisecondsSinceEpoch});
+        .update(
+            {'time': DateTime.now().millisecondsSinceEpoch, 'lastMessage': a});
     await FirebaseFirestore.instance
         .collection('ChatRoom')
         .doc(server["phoneNumber"])
         .collection('ListUsers')
         .doc(server["uid"] + "_" + _auth.currentUser.uid)
-        .update({'time': DateTime.now().millisecondsSinceEpoch});
+        .update(
+            {'time': DateTime.now().millisecondsSinceEpoch, 'lastMessage': a});
 
-    await FirebaseFirestore.instance
-        .collection('ChatRoom')
-        .doc(selfphoneNumber)
-        .collection('ListUsers')
-        .doc((_auth.currentUser.uid + "_" + server["uid"]).toString())
-        .update({'lastMessage':a}); 
+    // await FirebaseFirestore.instance
+    //     .collection('ChatRoom')
+    //     .doc(selfphoneNumber)
+    //     .collection('ListUsers')
+    //     .doc((_auth.currentUser.uid + "_" + server["uid"]).toString())
+    //     .update({});
 
-     await FirebaseFirestore.instance
-        .collection('ChatRoom')
-        .doc(server["phoneNumber"])
-        .collection('ListUsers')
-        .doc(server["uid"] + "_" + _auth.currentUser.uid)
-        .update({'lastMessage': a});       
-
- 
-
-
+    //  await FirebaseFirestore.instance
+    //     .collection('ChatRoom')
+    //     .doc(server["phoneNumber"])
+    //     .collection('ListUsers')
+    //     .doc(server["uid"] + "_" + _auth.currentUser.uid)
+    //     .update({'lastMessage': a});
   }
 
   sendMessage() async {
     if (messagetext.text.isNotEmpty && messagetext.text.trim().isNotEmpty) {
+      // DatabaseMethods()
+      //     .createChatRoom(
+      //         server["uid"],
+      //         server["phoneNumberWithCountry"].toString(),
+      //         widget.selfchatRoomMap,
+      //         widget.secondchatRoomMap
+      //         );
 
       Map<String, dynamic> messageMap = {
         "message": messagetext.text.toString().trim(),
         "sendBy": selfUid,
-        "lastmessage": messagetext.text.toString().trim(),
+        // "lastmessage": messagetext.text.toString().trim(),
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
-      // Map<String, dynamic> othermessageMap = {
-      //   "message":messagetext.text.toString().trim(),
-      //   "sendBy": otherUid,
-      //   "time": DateTime.now().millisecondsSinceEpoch,
-      //   "type": "text"
-      // };
+
       await DatabaseMethods()
           .addConvMessage(
-              server["phoneNumber"], messageMap, server["uid"], )
+        server["phoneNumber"],
+        messageMap,
+        server["uid"],
+      )
           .then((value) async {
-        updatetime(messagetext.text.toString().trim(),);
+        updatetime(
+          messagetext.text.toString().trim(),
+        );
       });
       messagetext.text = '';
     } else {
@@ -263,7 +276,6 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.white,
             ),
             onPressed: () async {
-              
               print("add button");
               // focusNode: focusNode.unfocus();
               await showAttachmentBottomSheet(context);
@@ -280,7 +292,7 @@ class _ChatScreenState extends State<ChatScreen> {
 // DocumentSnapshot lastdocument;
   getMessages() async {
     await DatabaseMethods().getConvoMessage(otherUid).then((value) async {
-       setState(() {
+      setState(() {
         chatMessageStream = value;
       });
       print('heelo init');
@@ -290,7 +302,7 @@ class _ChatScreenState extends State<ChatScreen> {
       otherURL = await DatabaseMethods().getPhotoUrlofanyUser(otherUid);
       print("ojojoajaos");
       print(otherURL);
-     
+
       print(server);
       print(contact);
     });
@@ -299,7 +311,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool isLoading = true;
 
   @override
-  void initState()  {
+  void initState() {
     // TODO: implement initState
 
     server = widget.server;
@@ -326,183 +338,194 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
+  bool longPressed = false;
+
   @override
   Widget build(BuildContext context) {
     _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
-      _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
+    _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
 // WillPopScope(
 //       onWillPop: (){
 //         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomePage()), (Route<dynamic> route) => false);
 
 //       },
+//
 
-    return  Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          backgroundColor: Color(0xff028090),
-          flexibleSpace: SafeArea(
-            child: Container(
-              height: MediaQuery.of(context).size.height * 95,
-              padding: const EdgeInsets.only(right: 16),
-              child: Row(
-                children: <Widget>[
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        backgroundColor: Color(0xff028090),
+        flexibleSpace: SafeArea(
+          child: Container(
+            height: MediaQuery.of(context).size.height * 95,
+            padding: const EdgeInsets.only(right: 16),
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(
+                  width: 2,
+                ),
+                CircleAvatar(
+                  backgroundColor: Colors.black,
+                  minRadius: 20,
+                  maxRadius: 20,
+                  child: ClipOval(
+                      child: AspectRatio(
+                          aspectRatio: 1,
+                          child: SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CachedNetworkImage(
+                                  imageUrl: widget.image != null
+                                      ? widget.image
+                                      : server['profilePicture'])))),
+                ),
+                const SizedBox(
+                  width: 12,
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          CupertinoPageRoute(
+                              builder: (context) => OtherProfileView(
+                                  server: server, image: otherURL)));
                     },
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 2,
-                  ),
-                  CircleAvatar(
-                    backgroundColor: Colors.black,
-                    minRadius: 20,
-                    maxRadius: 20,
-                    child: ClipOval(
-                        child: AspectRatio(
-                            aspectRatio: 1,
-                            child: SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CachedNetworkImage(imageUrl: widget.image!=null?widget.image : server['profilePicture'])))),
-                  ),
-                  const SizedBox(
-                    width: 12,
-                  ),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                                builder: (context) => OtherProfileView(
-                                    server: server, image: otherURL)));
-                      },
-                      onDoubleTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Text(
-                              contact.displayName,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(
-                              height: 6,
-                            ),
-                            Text(
-                              "Status",
-                              style: TextStyle(color: Colors.white, fontSize: 10),
-                            ),
-                          ],
-                        ),
+                    onDoubleTap: () {},
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            contact.displayName,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(
+                            height: 6,
+                          ),
+                          Text(
+                            "Status",
+                            style: TextStyle(color: Colors.white, fontSize: 10),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  // const Icon(
-                  //   Icons.settings,
-                  //   color: Colors.black54,
-                  // ),
+                ),
+                // const Icon(
+                //   Icons.settings,
+                //   color: Colors.black54,
+                // ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      // : AppBar(
+      //     title: Text('1'),
+      //     leading: Icon(Icons.close),
+      //     actions: <Widget>[Icon(Icons.delete), Icon(Icons.more_vert)],
+      //     backgroundColor: Color(0xff028090),
+      //   ),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 8,
+            child: Container(
+              child: Stack(
+                children: <Widget>[
+                  ChatMessageList(),
                 ],
               ),
             ),
           ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              flex: 8,
-              child: Container(
-                child: Stack(
-                  children: <Widget>[
-                    ChatMessageList(),
-                  ],
-                ),
-              ),
-            ),
-            _imageUploadProvider.getViewState == ViewState.Loading
-                ? Container(
-                  
-                    alignment: Alignment.bottomRight,
-                    margin: EdgeInsets.only(right: 15),
-                    child: CustomprogressIndicator()
-                    //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
-                    )
-                : Container(),
-              _imageDownloadProvider.getViewState == ViewState.Loading
-                ? SizedBox(
+          _imageUploadProvider.getViewState == ViewState.Loading
+              ? Container(
+                  alignment: Alignment.bottomRight,
+                  margin: EdgeInsets.only(right: 15),
+                  child: CustomprogressIndicator()
+                  //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                  )
+              : Container(),
+          _imageDownloadProvider.getViewState == ViewState.Loading
+              ? SizedBox(
                   // height: 50,
                   // width: 50,
                   child: Container(
                       alignment: Alignment.bottomLeft,
-                      margin: EdgeInsets.only(left: 15,top: 3),
+                      margin: EdgeInsets.only(left: 0, top: 3),
                       child: LinearProgressIndicator(
-                      minHeight:2,
-                        backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        minHeight: 2,
+                        backgroundColor: MyColors.maincolor,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       )
                       // CustomprogressIndicator()
                       //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
                       ),
                 )
-                              : Container(),
+              : Container(),
 
-            // ignore: prefer_const_constructors
-            Container(
-              width: MediaQuery.of(context).size.width * 0.99,
-              decoration: BoxDecoration(
-                color: const Color(0xff536162),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 5,
-                      child: Column(
-                        children: [
-                          ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                  maxHeight: 150.0, maxWidth: 300),
-                              child: textInput()),
-                        ],
-                      ),
+          // ignore: prefer_const_constructors
+          Container(
+            width: MediaQuery.of(context).size.width * 0.99,
+            decoration: BoxDecoration(
+              color: const Color(0xff536162),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      children: [
+                        ConstrainedBox(
+                            constraints: const BoxConstraints(
+                                maxHeight: 150.0, maxWidth: 300),
+                            child: textInput()),
+                      ],
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: InkWell(
-                            onTap: () {
-                              sendMessage();
-                            },
-                            child: Icon(
-                              Icons.send,
-                              color: Colors.white,
-                            )),
-                      ),
-                    )
-                  ],
-                ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: InkWell(
+                          onTap: () {
+                            sendMessage();
+                          },
+                          child: Icon(
+                            Icons.send,
+                            color: Colors.white,
+                          )),
+                    ),
+                  )
+                ],
               ),
             ),
+          ),
 
-            // textInput()
-          ],
-        ),
-      );
-    
+          // textInput()
+        ],
+      ),
+    );
   }
 }
 
@@ -513,13 +536,13 @@ class TileMessage extends StatelessWidget {
   final type;
   final imageUrl;
   final size;
-  TileMessage(
-      this.type, this.size, this.message, this.isSendByMe, this.timing, this.imageUrl);
+  final id;
+  TileMessage(this.id, this.type, this.size, this.message, this.isSendByMe,
+      this.timing, this.imageUrl);
 
   bool isDownloading = false;
 
-  downloadImage(imgUrl,_imageDownloadProvider) async {
-
+  downloadImage(imgUrl, _imageDownloadProvider) async {
     isDownloading = true;
     var now = new DateTime.now();
     var formatter = new DateFormat('yyyy-MM-dd');
@@ -550,23 +573,81 @@ class TileMessage extends StatelessWidget {
     }
   }
 
+  showDialogBox(context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Dialog(
+            backgroundColor: MyColors.maincolor,
+            //this right here
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: 100,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      FlatButton(
+                        height: 20,
+                        onPressed: () {
+                          DatabaseMethods()
+                              .deleteConvo(id, server['phoneNumber'], otherUid);
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          "Delete for both",
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        // color: const Color(0xFF1BC0C5),
+                      ),
+                      FlatButton(
+                        height: 20,
+                        onPressed: () {
+                          DatabaseMethods().deleteSingleConvo(
+                              id, server['phoneNumber'], otherUid);
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          "Delete for me",
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        // color: const Color(0xFF1BC0C5),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     // DateTime myDateTime = timing.toDate();
-  ImageDownloadProvider _imageDownloadProvider;
-   _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
+    ImageDownloadProvider _imageDownloadProvider;
+    _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
     final date = DateTime.fromMillisecondsSinceEpoch(timing);
     final formattedDate = DateFormat.yMMMd().add_jm().format(date);
-    String time = DateFormat.jm().format(date);   
+    String time = DateFormat.jm().format(date);
     print(time);
 
     return type != null && type == "FileType.image"
-        ? GestureDetector(
+        ? InkWell(
             onTap: () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => PreviewPage(imageUrl: imageUrl)));
+            },
+            onLongPress: () {
+              print(type);
+              print(formattedDate);
+              print(id);
+              isSendByMe ? showDialogBox(context) : null;
             },
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 5),
@@ -587,15 +668,16 @@ class TileMessage extends StatelessWidget {
                   // ignore: prefer_const_constructors
                   // ignore: deprecated_member_use
                   !isSendByMe
-                      ?     RaisedButton(
-                          // color: MyColors.buttoncolor,
+                      ? RaisedButton(
+                          color: MyColors.maincolor,
                           onPressed: () {
-                            downloadImage(imageUrl,_imageDownloadProvider);
+                            downloadImage(imageUrl, _imageDownloadProvider);
                           },
                           child: Icon(
                             Icons.file_download,
+                            color: Colors.white,
                           ))
-                      :   Container(),
+                      : Container(),
                   Padding(
                     padding: isSendByMe
                         ? const EdgeInsets.only(right: 5)
@@ -610,189 +692,206 @@ class TileMessage extends StatelessWidget {
             ),
           )
         : type != "text" && type != "FileType.image"
-            ? Container(
-                margin: isSendByMe
-                    ? const EdgeInsets.only(left: 110, top:2)
-                    : const EdgeInsets.only(right: 110, top: 2),
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                width: MediaQuery.of(context).size.width * 0.7,
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.70,
-                ),
-                alignment:
-                    isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
+            ? InkWell(
+                onLongPress: () {
+                  print(type);
+                  print(formattedDate);
+                  print(id);
+                  isSendByMe ? showDialogBox(context) : null;
+                },
                 child: Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                      // color: MyColors.maincolor,
-                      gradient: LinearGradient(
-                          colors: isSendByMe
-                              ? [Color(0xff114b5f), Color(0xff114b5f)]
-                              // [MyColors.maincolor, MyColors.buttoncolor]
-                              : [
-                                  Color(0xff028090),
-                                  Color(0xff114b5f),
-                                ]),
-                      borderRadius: isSendByMe
-                          ? const BorderRadius.only(
-                              topLeft: Radius.circular(10),
-                              topRight: Radius.circular(10),
-                              bottomLeft: Radius.circular(10))
-                          : const BorderRadius.only(
-                              topLeft: Radius.circular(10),
-                              topRight: Radius.circular(10),
-                              bottomRight: Radius.circular(10),
-                            )),
-                  child: Column(
-                    crossAxisAlignment: isSendByMe
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: isSendByMe
-                                  ? const BorderRadius.all(Radius.circular(2))
-                                  : const BorderRadius.all(Radius.circular(2))),
-                          padding: EdgeInsets.all(2),
-                          child: Row(
-                            children: [
-                              Icon(Icons.file_copy_sharp,
-                                  color: Color(0xff114b5f)),
-                              SizedBox(width: 2),
-                              Flexible(
-                                child: Text(
-                                  message,
-                                  style: TextStyle(fontSize: 13),
+                  margin: isSendByMe
+                      ? const EdgeInsets.only(left: 110, top: 2)
+                      : const EdgeInsets.only(right: 110, top: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.70,
+                  ),
+                  alignment:
+                      isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    padding: EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                        // color: MyColors.maincolor,
+                        gradient: LinearGradient(
+                            colors: isSendByMe
+                                ? [Color(0xff114b5f), Color(0xff114b5f)]
+                                // [MyColors.maincolor, MyColors.buttoncolor]
+                                : [
+                                    Color(0xff028090),
+                                    Color(0xff114b5f),
+                                  ]),
+                        borderRadius: isSendByMe
+                            ? const BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                topRight: Radius.circular(10),
+                                bottomLeft: Radius.circular(10))
+                            : const BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                topRight: Radius.circular(10),
+                                bottomRight: Radius.circular(10),
+                              )),
+                    child: Column(
+                      crossAxisAlignment: isSendByMe
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: isSendByMe
+                                    ? const BorderRadius.all(Radius.circular(2))
+                                    : const BorderRadius.all(
+                                        Radius.circular(2))),
+                            padding: EdgeInsets.all(2),
+                            child: Row(
+                              children: [
+                                Icon(Icons.file_copy_sharp,
+                                    color: Color(0xff114b5f)),
+                                SizedBox(width: 2),
+                                Flexible(
+                                  child: Text(
+                                    message,
+                                    style: TextStyle(fontSize: 13),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          )),
-                      // ignore: prefer_const_constructors
-                      // ignore: deprecated_member_use
-                     Row(
-                   
-                            mainAxisAlignment: isSendByMe
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
-                       children: [
-                         Column(
-                           crossAxisAlignment: isSendByMe
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                           children: [
-                              Padding(
-                            padding: isSendByMe
-                                ? const EdgeInsets.only(right: 1 ,top:2 )
-                                : const EdgeInsets.only(left: 1,top:2),
-                            child: size!=null ?Text(
-                              size,
-                                textAlign:
-                                    isSendByMe ? TextAlign.end : TextAlign.left,
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 9)):
-                                    Container()
-                          ),
-                          // const SizedBox(height: 3),
-                          Padding(
-                            padding: isSendByMe
-                                ? const EdgeInsets.only(right: 1)
-                                : const EdgeInsets.only(left: 1),
-                            child: Text(formattedDate,
-                                textAlign:
-                                    isSendByMe ? TextAlign.end : TextAlign.left,
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 9)),
-                          ),
-
-                           ],
-                         ),
-                           !isSendByMe
-                          ? Padding(
-                            padding: const EdgeInsets.only(left :30),
-                            child: Container(
-                               
-                                child: RaisedButton(
-                                    color: MyColors.maincolor,
-                                    onPressed: () {
-                                      downloadImage(imageUrl,_imageDownloadProvider);
-                                    },
-                                    child: Icon(
-                                      Icons.file_download,
-                                      color: Colors.white,
-                                    )),
-                              ),
-                          )
-                          : Container(),
-                         
-                       ],
-                     ),
-                      
-                    ],
+                              ],
+                            )),
+                        // ignore: prefer_const_constructors
+                        // ignore: deprecated_member_use
+                        Row(
+                          mainAxisAlignment: isSendByMe
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
+                          children: [
+                            Column(
+                              crossAxisAlignment: isSendByMe
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                    padding: isSendByMe
+                                        ? const EdgeInsets.only(
+                                            right: 1, top: 2)
+                                        : const EdgeInsets.only(
+                                            left: 1, top: 2),
+                                    child: size != null
+                                        ? Text(size,
+                                            textAlign: isSendByMe
+                                                ? TextAlign.end
+                                                : TextAlign.left,
+                                            style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9))
+                                        : Container()),
+                                // const SizedBox(height: 3),
+                                Padding(
+                                  padding: isSendByMe
+                                      ? const EdgeInsets.only(right: 1)
+                                      : const EdgeInsets.only(left: 1),
+                                  child: Text(formattedDate,
+                                      textAlign: isSendByMe
+                                          ? TextAlign.end
+                                          : TextAlign.left,
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 9)),
+                                ),
+                              ],
+                            ),
+                            !isSendByMe
+                                ? Padding(
+                                    padding: const EdgeInsets.only(left: 30),
+                                    child: Container(
+                                      child: RaisedButton(
+                                          color: MyColors.maincolor,
+                                          onPressed: () {
+                                            downloadImage(imageUrl,
+                                                _imageDownloadProvider);
+                                          },
+                                          child: Icon(
+                                            Icons.file_download,
+                                            color: Colors.white,
+                                          )),
+                                    ),
+                                  )
+                                : Container(),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               )
-            : Container(
-                margin: const EdgeInsets.symmetric(vertical: 2),
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                width: MediaQuery.of(context).size.width * 0.7,
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.70,
-                ),
-                alignment:
-                    isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
+            : InkWell(
+                onLongPress: () {
+                  print(type);
+                  print(formattedDate);
+                  print(id);
+                  isSendByMe ? showDialogBox(context) : null;
+                },
                 child: Container(
-                  margin: isSendByMe
-                      ? const EdgeInsets.only(left: 110)
-                      : const EdgeInsets.only(
-                          right: 110,
-                        ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          colors: isSendByMe
-                              ? [Color(0xff114b5f), Color(0xff114b5f)]
-                              // [MyColors.maincolor, MyColors.buttoncolor]
-                              : [
-                                  Color(0xff028090),
-                                  Color(0xff114b5f),
-                                ]),
-                      // [MyColors.primaryColorLight, MyColors.maincolor]),
-                      borderRadius: isSendByMe
-                          ? const BorderRadius.only(
-                              topLeft: Radius.circular(10),
-                              topRight: Radius.circular(10),
-                              bottomLeft: Radius.circular(10))
-                          : const BorderRadius.only(
-                              topLeft: Radius.circular(10),
-                              topRight: Radius.circular(10),
-                              bottomRight: Radius.circular(10),
-                            )),
-                  // height: 15,
+                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.70,
+                  ),
+                  alignment:
+                      isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: isSendByMe
+                        ? const EdgeInsets.only(left: 110)
+                        : const EdgeInsets.only(
+                            right: 110,
+                          ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: isSendByMe
+                                ? [Color(0xff114b5f), Color(0xff114b5f)]
+                                // [MyColors.maincolor, MyColors.buttoncolor]
+                                : [
+                                    Color(0xff028090),
+                                    Color(0xff114b5f),
+                                  ]),
+                        // [MyColors.primaryColorLight, MyColors.maincolor]),
+                        borderRadius: isSendByMe
+                            ? const BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                topRight: Radius.circular(10),
+                                bottomLeft: Radius.circular(10))
+                            : const BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                topRight: Radius.circular(10),
+                                bottomRight: Radius.circular(10),
+                              )),
+                    // height: 15,
 
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: isSendByMe
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        child: SelectableText(
-                          message,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              letterSpacing: 0,
-                              fontSize: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: isSendByMe
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          child: SelectableText(
+                            message,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                letterSpacing: 0,
+                                fontSize: 16),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(formattedDate,
-                          textAlign:
-                              isSendByMe ? TextAlign.end : TextAlign.left,
-                          style:
-                              const TextStyle(color: Colors.white, fontSize: 9))
-                    ],
+                        const SizedBox(height: 3),
+                        Text(formattedDate,
+                            textAlign:
+                                isSendByMe ? TextAlign.end : TextAlign.left,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 9))
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -815,12 +914,14 @@ class ChatMessageList extends StatelessWidget {
               // controller: _controller,
               shrinkWrap: true,
               reverse: true,
+
               // print('hello in list');
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
                 return TileMessage(
+                    snapshot.data.docs[index].id,
                     snapshot.data.docs[index].data()["type"],
-                      snapshot.data.docs[index].data()["size"],
+                    snapshot.data.docs[index].data()["size"],
                     snapshot.data.docs[index].data()["message"],
                     snapshot.data.docs[index].data()["sendBy"] == selfUid,
                     (snapshot.data.docs[index].data()["time"]),

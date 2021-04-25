@@ -69,6 +69,10 @@ class _ContactsPageState extends State<ContactsPage> {
       "time" : DateTime.now().millisecondsSinceEpoch,
       "profilePicture" : currentUid.photoURL
     };
+
+    //  Navigator.push(context, MaterialPageRoute(builder: (context) {
+    //     return ChatScreen(server: server, contact: contact,selfchatRoomMap:selfchatRoomMap,secondchatRoomMap:secondchatRoomMap);
+    //   }));
     DatabaseMethods()
         .createChatRoom(
             server["uid"],

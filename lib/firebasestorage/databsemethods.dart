@@ -32,10 +32,6 @@ class DatabaseMethods {
     readProfile(uid);
   }
 
-
-
-
- 
   var currentuser = _auth.currentUser.uid;
 
   Future<void> updateNameofuser(name) async {
@@ -184,7 +180,11 @@ class DatabaseMethods {
     }
   }
 
-  addConvMessage(otherphone, messageMap, serveruid, ) async {
+  addConvMessage(
+    otherphone,
+    messageMap,
+    serveruid,
+  ) async {
     var user = _auth.currentUser;
     var phoneNumber = user.phoneNumber.toString();
 
@@ -202,7 +202,7 @@ class DatabaseMethods {
         .catchError((e) {
       print(e.toString());
     }).then((value) async {
-      print(value);
+      print(value.id);
       print(otherphone);
       if (otherphone.contains("+")) {
         print("yesss");
@@ -218,14 +218,19 @@ class DatabaseMethods {
           .collection("ListUsers")
           .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
           .collection("Chats")
-          .add(messageMap)
+          .doc(value.id)
+          .set(messageMap)
           .catchError((onError) {
         print(onError);
       });
     });
   }
 
-  addImageConvMessage(otherPhone, messageMap, serveruid, ) {
+  addImageConvMessage(
+    otherPhone,
+    messageMap,
+    serveruid,
+  ) {
     // ImageUploadProvider _imageUploadProvider;
     print(_auth.currentUser.phoneNumber);
     var user = _auth.currentUser;
@@ -255,7 +260,8 @@ class DatabaseMethods {
           .collection("ListUsers")
           .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
           .collection("Chats")
-          .add(messageMap);
+          .doc(value.id)
+          .set(messageMap);
     });
 
     return 'completed';
@@ -295,7 +301,7 @@ class DatabaseMethods {
         .snapshots();
   }
 
- Future getPhotoUrlofanyUser(uid) async {
+  Future getPhotoUrlofanyUser(uid) async {
     var url;
     var data =
         await FirebaseFirestore.instance.doc("users/$uid").get().then((value) {
@@ -305,6 +311,129 @@ class DatabaseMethods {
     });
 
     return data.toString();
+  }
+
+  deleteConvo(id, otherphone, serveruid) {
+    var user = _auth.currentUser;
+    var phoneNumber =
+        CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
+
+    FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + "_" + serveruid))
+        .collection("Chats")
+        .doc(id)
+        .delete()
+        .catchError((e) {
+      print(e.toString());
+    }).then((value) async {
+      print(otherphone);
+      if (otherphone.contains("+")) {
+        print("yesss");
+        otherphone = otherphone.substring(otherphone.length - 10);
+        print(otherphone);
+      } else {
+        otherphone = otherphone;
+        print(otherphone);
+      }
+      await FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(otherphone)
+          .collection("ListUsers")
+          .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
+          .collection("Chats")
+          .doc(id)
+          .delete()
+          .catchError((onError) {
+        print(onError);
+      });
+
+     
+    });
+
+     FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(phoneNumber)
+          .collection("ListUsers")
+          .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
+          .collection("Chats")
+          .orderBy("time", descending: true)
+          .limit(1)
+          .get()
+          .then((value) async {
+        var a = value.docs.first.data();
+        print(a['message']);
+
+        FirebaseFirestore.instance
+            .collection('ChatRoom')
+            .doc(phoneNumber)
+            .collection('ListUsers')
+            .doc((_auth.currentUser.uid + "_" + serveruid))
+            .update({'lastMessage': a['message']});
+      });
+
+      FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(otherphone)
+          .collection("ListUsers")
+          .doc((serveruid + "_" + _auth.currentUser.uid))
+          .collection("Chats")
+          .orderBy("time", descending: true)
+          .limit(1)
+          .get()
+          .then((value) async {
+        var a = value.docs.first.data();
+        print(a['message']);
+
+        FirebaseFirestore.instance
+            .collection('ChatRoom')
+            .doc(otherphone)
+            .collection('ListUsers')
+            .doc(serveruid + "_" + _auth.currentUser.uid)
+            .update({'lastMessage': a['message']});
+      });
+  }
+
+  Future deleteSingleConvo(id, otherphone, serveruid) {
+    var user = _auth.currentUser;
+    var phoneNumber =
+        CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
+
+    FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + "_" + serveruid))
+        .collection("Chats")
+        .doc(id)
+        .delete()
+        .catchError((e) {
+      print(e.toString());
+    }).then((value) async {
+      await FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(phoneNumber)
+          .collection("ListUsers")
+          .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
+          .collection("Chats")
+          .orderBy("time", descending: true)
+          .limit(1)
+          .get()
+          .then((value) async {
+        var a = value.docs.first.data();
+        print(a['message']);
+
+        FirebaseFirestore.instance
+            .collection('ChatRoom')
+            .doc(phoneNumber)
+            .collection('ListUsers')
+            .doc((_auth.currentUser.uid + "_" + serveruid))
+            .update({'lastMessage': a['message']});
+      });
+
+    });
   }
 
   Future<void> savePhonenumber(phone) async {
