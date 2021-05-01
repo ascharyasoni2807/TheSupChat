@@ -56,15 +56,15 @@ class _LoginPageState extends State<LoginPage> {
                                                 Radius.circular(100))),
                                         child: Center(
                                             child: Text("TheSupChat",
-                                                style: GoogleFonts.redressed(
-                                                    textStyle: TextStyle(
+                                                style:  TextStyle(
                                                         color:
                                                             MyColors.maincolor,
                                                         letterSpacing: 1,
                                                         fontSize: 30,
+                                                        fontFamily:'Rightss' ,
                                                         fontWeight: FontWeight
-                                                            .bold))))),
-                                  ),
+                                                            .bold)),
+                                  ),))
                                 ],
                               ),
                             ),

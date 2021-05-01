@@ -67,23 +67,19 @@ final FirebaseAuth _auth = FirebaseAuth.instance;
 
 
 
-Future uploadChatPic(File file , otherUid,basenames, ImageUploadProvider _imageUploadProvider) async {
+Future uploadChatPic(File file , otherUid,basenames,  ) async {
 var user = await _auth.currentUser;
 var imageurl;
 
 
-final tempDir = await getTemporaryDirectory();
-    final path = tempDir.path;
-
-
-_imageUploadProvider.setToLoading();
+// _imageUploadProvider.setToLoading();
  startUpload(reference) async {
   firebase_storage.UploadTask uploadTask = reference.putFile(file);
     firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() =>  print('complete'));
    
     imageurl  = await taskSnapshot.ref.getDownloadURL();
     print(uploadTask.snapshot); 
- _imageUploadProvider.setToIdle();
+//  _imageUploadProvider.setToIdle();
     return imageurl;
 
  }
@@ -118,6 +114,43 @@ _imageUploadProvider.setToLoading();
   // }
 
 
+Future<List<String>> uploadFiles(List _images,otheruid,ImageUploadProvider _imageUploadProvider ) async {
+  print(_images);
+  print(File(_images[0].path));
+   _imageUploadProvider.setToLoading();
+  var imageUrls = await Future.wait(_images.map((_image) => uploadFile(File(_image.path),otheruid)));
+  print(imageUrls);
+    _imageUploadProvider.setToIdle();
+
+  
+
+  return imageUrls;
+}
+
+Future<String> uploadFile(File _image,otherUid) async {
+  var user = await _auth.currentUser;
+ var ran= Random();
+  firebase_storage.TaskSnapshot taskSnapshot ;
+   int random = ran.nextInt(999999);
+   print(_image);
+   String basenames = _image.toString(); 
+  firebase_storage.Reference reference1 =  firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${otherUid}_${user.uid}");
+        // firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid);
+   firebase_storage.Reference reference2 =firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid+random.toString()+"_"+basenames);
+  if(reference1==null && reference2==null ) {
+
+    firebase_storage.Reference reference =  firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${otherUid}_${user.uid}/${user.uid}"+"_"+otherUid+random.toString()+"_"+basenames);
+    firebase_storage.UploadTask uploadTask = reference.putFile(_image);
+  taskSnapshot = await uploadTask.whenComplete((){});
+
+  }else {
+  firebase_storage.Reference reference =firebase_storage.FirebaseStorage.instance.ref().child("chatImages/${user.uid}_${otherUid}/${user.uid}"+"_"+otherUid+random.toString()+"_"+basenames); 
+  firebase_storage.UploadTask uploadTask = reference.putFile(_image);
+    taskSnapshot = await uploadTask.whenComplete((){});
+  }
+
+  return await taskSnapshot.ref.getDownloadURL();
+}
 
 
 

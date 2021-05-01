@@ -8,7 +8,7 @@ import 'package:theproject/theme.dart';
 class BottomSheetExample extends StatelessWidget {
   
 
-  var imageUploadProvider;
+  final imageUploadProvider;
   final nameofuser;
   BottomSheetExample({this.imageUploadProvider,this.nameofuser});
   

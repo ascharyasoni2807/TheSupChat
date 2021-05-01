@@ -42,16 +42,31 @@ class _OtherProfileViewState extends State<OtherProfileView> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              widget.server["phoneNumber"],
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  // fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.w500),
-                            ),
+                          Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  widget.server["phoneNumber"],
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize:14,
+                                      // fontStyle: FontStyle.italic,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              //  Padding(
+                              //   padding: const EdgeInsets.all(8.0),
+                              //   child: Text(
+                              //     widget.server['phoneNumber'],
+                              //     style: TextStyle(
+                              //         color: Colors.white,
+                              //         fontSize:14,
+                              //         // fontStyle: FontStyle.italic,
+                              //         fontWeight: FontWeight.w500),
+                              //   ),
+                              // ),
+                            ],
                           ),
                         ],
                       )),

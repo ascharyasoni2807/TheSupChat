@@ -54,12 +54,13 @@ class _SplashPageState extends State<SplashPage> {
                   // width: 500,
                   child: Center(
                       child: Text("TheSupChat",
-                          style: GoogleFonts.redressed(
-                              textStyle: TextStyle(
+                          style:TextStyle(
                                   color: MyColors.maincolor,
                                   letterSpacing: 3,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.bold))))),
+                                  fontSize: 30,fontFamily: 'Rightss',
+                                  fontWeight: FontWeight.bold)
+                          )))
+
             ),
           ],
         ),

@@ -12,12 +12,23 @@ CachedImage({this.imageUrl});
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
+      
       // borderRadius: BorderRadius.circular(5),
       child: CachedNetworkImage(imageUrl: imageUrl,
       imageBuilder: (context, imageProvider) => Container(
-    width: 220.0,
-    height: 220.0,
+        padding: EdgeInsets.all(1),
+    width: 250.0,
+    height: 250.0,
      decoration: BoxDecoration(
+
+               boxShadow :[  BoxShadow(
+                        // color: Colors.black,
+                        blurRadius: 1.0,
+                        // spreadRadius: 0.0,
+                        // offset: Offset(
+                        //     0,1.0), // shadow direction: bottom right
+                      ),]
+        ,
         border: Border.all(
                     color: Color(0xff11385f) ,
                     width: 3,

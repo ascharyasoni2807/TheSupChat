@@ -39,52 +39,101 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 
   createChatRoom(server, contact) async {
-    var currentUid = await StorageRepo().getCurrentUidofUser();
+//     var currentUid = await StorageRepo().getCurrentUidofUser();
+//   var a;
+//    var b;
+//    var time1;
+//    var time2;
+//     print(server["uid"]);
 
-    print(server["uid"]);
+// try{
+//  await FirebaseFirestore.instance
+//           .collection("ChatRoom")
+//           .doc( CustomFunctions().shortPhoneNumber(currentUid.phoneNumber) )
+//           .collection("ListUsers")
+//           .doc((currentUid.uid + '_' + server["uid"]))
+//           .collection("Chats")
+//           .orderBy("time", descending: true)
+//           .limit(1)
+//           .get()
+//           .then((value) async {
+//         a = value.docs.first.data();
+//         print(a);
+//          time1=a['time'];
 
-    List<String> users = [server["uid"], currentUid.uid];
-    List<String> phones = [
-      server["phoneNumberWithCountry"],
-      currentUid.phoneNumber
-    ];
-    final selfPhoneNumber = CustomFunctions().shortPhoneNumber(currentUid.phoneNumber);
-    print(phones);
-    print(users);
-    Map<String, dynamic> selfchatRoomMap = {
-      "users": users,
-      "chatroomIdWithCountry": server["phoneNumberWithCountry"].toString(),
-      "phoneNumber" : server["phoneNumber"].toString(),
-      "uid":server["uid"],
-      "time" : DateTime.now().millisecondsSinceEpoch,
-      "lastMessage": '',
-      "profilePicture" : server["profilePicture"].toString(),
-    };
-    print(users.reversed.toList());
-    Map<String, dynamic> secondchatRoomMap = {
-      "users": users.reversed.toList(),
-      "chatroomIdWithCountry": currentUid.phoneNumber,
-      "phoneNumber" :selfPhoneNumber,
-       "uid":currentUid.uid,
-      "time" : DateTime.now().millisecondsSinceEpoch,
-      "profilePicture" : currentUid.photoURL
-    };
+//         a=a['message'];
+       
+//   await FirebaseFirestore.instance
+//           .collection("ChatRoom")
+//           .doc(server['phoneNumber'])
+//           .collection("ListUsers")
+//           .doc((server['uid'] + "_" + currentUid.uid))
+//           .collection("Chats")
+//           .orderBy("time", descending: true)
+//           .limit(1)
+//           .get()
+//           .then((value) async {
+//         b= value.docs.first.data();
+//      print(b);
+//         time2=b['time'];
+//         b=b['message'];
+     
+//        }
+//           );
 
-    //  Navigator.push(context, MaterialPageRoute(builder: (context) {
-    //     return ChatScreen(server: server, contact: contact,selfchatRoomMap:selfchatRoomMap,secondchatRoomMap:secondchatRoomMap);
-    //   }));
-    DatabaseMethods()
-        .createChatRoom(
-            server["uid"],
-            server["phoneNumberWithCountry"].toString(),
-            selfchatRoomMap,
-            secondchatRoomMap
-            )
-        .then((value) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) {
+
+//         });
+// // print(a+b);
+// }catch(e){
+//   print(e);
+// }
+   
+
+
+//     List<String> users = [server["uid"], currentUid.uid];
+//     List<String> phones = [
+//       server["phoneNumberWithCountry"],
+//       currentUid.phoneNumber
+//     ];
+//     final selfPhoneNumber = CustomFunctions().shortPhoneNumber(currentUid.phoneNumber);
+//     print(phones);
+//     print(users);
+//     Map<String, dynamic> selfchatRoomMap = {
+//       "users": users,
+//       "chatroomIdWithCountry": server["phoneNumberWithCountry"].toString(),
+//       "phoneNumber" : server["phoneNumber"].toString(),
+//       "uid":server["uid"],
+//       "time" : time1!=null? time1:DateTime.now().millisecondsSinceEpoch,
+//       "lastMessage": a!=null? a:'',
+//       "profilePicture" : server["profilePicture"].toString(),
+//     };
+//     print(users.reversed.toList());
+//     Map<String, dynamic> secondchatRoomMap = {
+//       "users": users.reversed.toList(),
+//       "chatroomIdWithCountry": currentUid.phoneNumber,
+//       "phoneNumber" :selfPhoneNumber,
+//        "uid":currentUid.uid,
+//       "time" : time2!=null?time2:DateTime.now().millisecondsSinceEpoch,
+//       "lastMessage": b!=null?b:'',
+//       "profilePicture" : currentUid.photoURL
+//     };
+
+    
+//     DatabaseMethods()
+//         .createChatRoom(
+//             server["uid"],
+//             server["phoneNumberWithCountry"].toString(),
+//             selfchatRoomMap,
+//             secondchatRoomMap
+//             )
+//         .then((value) {
+//       Navigator.push(context, MaterialPageRoute(builder: (context) {
+//         return ChatScreen(server: server, contact: contact);
+//       }));
+//     });
+     Navigator.push(context, MaterialPageRoute(builder: (context) {
         return ChatScreen(server: server, contact: contact);
       }));
-    });
     print("inserver");
   }
 
@@ -125,7 +174,7 @@ class _ContactsPageState extends State<ContactsPage> {
           print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
           print(value);
           // learnt new thing
-           foundusers.sort((a,b) => a['phoneData'].displayName.compareTo(b['phoneData'].displayName));
+           foundusers.sort((a,b) => a['phoneData'].displayName.toString().toLowerCase().compareTo(b['phoneData'].displayName.toString().toLowerCase()));
         }
       });
     });
@@ -178,111 +227,112 @@ class _ContactsPageState extends State<ContactsPage> {
       body: foundusers != null
           ? isbuilding
               ? Container(
-                // color: Color(0xff03506f).withOpacity(0.3),
-                // Colors.blueGrey.withOpacity(0.5),
-                  child: Column(
-                    children: [
-                      Expanded(
-                          child: foundusers != null
-                              ? ListView.builder(
-                                  itemCount: foundusers.length ?? 0,
-                                  itemBuilder:
-                                      (BuildContext context, int index) {
-                                    final _contact =
-                                        foundusers.elementAt(index);
-                                    Contact contact = _contact["phoneData"];
-                                    final serverData = _contact["serverData"];
-                                    //  setState(() {
-                                    //      isbuilding = true;
-                                    //  });
+                  // color: Color(0xff03506f).withOpacity(0.3),
+                  // Colors.blueGrey.withOpacity(0.5),
+                    child: Column(
+                      children: [
+                        Expanded(
+                            child: foundusers != null
+                ? ListView.builder(
+                    itemCount: foundusers.length ?? 0,
+                    itemBuilder:
+                        (BuildContext context, int index) {
+                      final _contact =
+                          foundusers.elementAt(index);
+                      Contact contact = _contact["phoneData"];
+                      final serverData = _contact["serverData"];
+                      //  setState(() {
+                      //      isbuilding = true;
+                      //  });
 
-                                    return contact != null
-                                        ? Container(
-                                            padding: EdgeInsets.only(top: 2),
-                                            child: InkWell(
-                                              onTap: () {
-                                                createChatRoom(
-                                                    serverData, contact);
-                                              },
-                                              onDoubleTap: () {},
-                                              splashColor: Colors.grey,
-                                              child: ListTile(
-                                                minVerticalPadding: 5,
-                                                contentPadding:
-                                                    const EdgeInsets.symmetric(
-                                                  vertical: 2,
-                                                ),
-                                                leading: serverData[
-                                                            "profilePicture"] !=
-                                                        null
-                                                    ? CircleAvatar(
-                                                        radius: 50,
-                                                        backgroundColor:
-                                                            Colors.black,
-                                                        child: ClipOval(
-                                                          child: AspectRatio(
-                                                            aspectRatio: 1,
-                                                            child: SizedBox(
-                                                                height: 20,
-                                                                width: 20,
-                                                                child:
-                                                                    CachedNetworkImage(
-                                                                  imageUrl:
-                                                                      serverData[
-                                                                          "profilePicture"],
-                                                                  progressIndicatorBuilder: (context,
-                                                                          url,
-                                                                          downloadProgress) =>
-                                                                      CircularProgressIndicator(
-                                                              strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(MyColors.maincolor)  ,        
-                                                                          value:
-                                                                              downloadProgress.progress),
-                                                                  errorWidget: (context,
-                                                                          url,
-                                                                          error) =>
-                                                                      Icon(Icons
-                                                                          .error),
-                                                                )),
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : CircleAvatar(
-                                                        child: Text(
-                                                            contact.initials()),
-                                                        backgroundColor:
-                                                            MyColors.maincolor,
-                                                      ),
-                                                title: Text(
-                                                  contact.displayName,
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 18),
-                                                ),
-                                                subtitle: Text(
-                                                  contact.phones.length != 0
-                                                      ? serverData["phoneNumber"]
-                                                      : '',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                //This can be further expanded to showing contacts detail
-                                                // onPressed().
+                      return contact != null
+                          ? Card(child: Container(
+                                padding: EdgeInsets.only(top:1),
+                                child: InkWell(
+                                  onTap: () {
+                                    createChatRoom(
+                                        serverData, contact);
+                                  },
+                                  onDoubleTap: () {},
+                                  splashColor: Colors.grey,
+                                  child: ListTile(
+                                    minVerticalPadding: 5,
+                                    contentPadding:
+                                        const EdgeInsets.symmetric(
+                                      vertical: 2,
+                                    ),
+                                    leading: serverData[
+                                                "profilePicture"] !=
+                                            null
+                                        ? CircleAvatar(
+                                            radius: 50,
+                                            backgroundColor:
+                                                Colors.black,
+                                            child: ClipOval(
+                                              child: AspectRatio(
+                                                aspectRatio: 1,
+                                                child: SizedBox(
+                                                    height: 20,
+                                                    width: 20,
+                                                    child:
+                                                        CachedNetworkImage(
+                                                      imageUrl:
+                                                          serverData[
+                                                              "profilePicture"],
+                                                      progressIndicatorBuilder: (context,
+                                                              url,
+                                                              downloadProgress) =>
+                                                          CircularProgressIndicator(
+                                                  strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(MyColors.maincolor)  ,        
+                                                              value:
+                                                                  downloadProgress.progress),
+                                                      errorWidget: (context,
+                                                              url,
+                                                              error) =>
+                                                          Icon(Icons
+                                                              .error),
+                                                    )),
                                               ),
                                             ),
                                           )
-                                        : SizedBox.shrink();
-                                  },
-                                )
-                              : Container(
-                                  //  color: Colors.blueGrey.withOpacity(0.5),
-                                child: Center(
-                                    child: progressIndicator()),
-                              ))
-                    ],
-                  ),
-                )
+                                        : CircleAvatar(
+                                            child: Text(
+                                                contact.initials()),
+                                            backgroundColor:
+                                                MyColors.maincolor,
+                                          ),
+                                    title: Text(
+                                      contact.displayName,
+                                      style: TextStyle(
+                                          fontWeight:
+                                              FontWeight.bold,
+                                          fontSize: 18,fontFamily: 'Crimson'),
+                                    ),
+                                    subtitle: Text(
+                                      contact.phones.length != 0
+                                          ? serverData["phoneNumber"]
+                                          : '',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    //This can be further expanded to showing contacts detail
+                                    // onPressed().
+                                  ),
+                                ),
+                              ),
+                          )
+                          : SizedBox.shrink();
+                    },
+                  )
+                : Container(
+                    //  color: Colors.blueGrey.withOpacity(0.5),
+                  child: Center(
+                      child: progressIndicator()),
+                ))
+                      ],
+                    ),
+                  )
               : Container(
                    color: Colors.blueGrey.withOpacity(0.5),
                 child: Center(child: progressIndicator()))

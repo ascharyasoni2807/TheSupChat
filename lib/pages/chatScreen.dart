@@ -28,6 +28,7 @@ import 'package:theproject/widgets/cachedImage.dart';
 import 'package:theproject/widgets/cirindi.dart';
 import 'package:theproject/pages/previewImage.dart';
 import 'package:theproject/widgets/alertdialog.dart';
+import 'package:theproject/widgets/onlinestatus.dart';
 
 import '../firebasestorage/databsemethods.dart';
 import '../theme.dart';
@@ -50,7 +51,6 @@ class ChatScreen extends StatefulWidget {
   _ChatScreenState createState() => _ChatScreenState();
 }
 
-ScrollController _controller = ScrollController();
 Stream chatMessageStream;
 var server;
 var contact;
@@ -59,12 +59,15 @@ var selfUid;
 var otherURL;
 TextEditingController messagetext = new TextEditingController();
 final databaseReference = FirebaseDatabase.instance.reference();
+ScrollController _controller = ScrollController();
 
 class _ChatScreenState extends State<ChatScreen> {
   ImageUploadProvider _imageUploadProvider;
   ImageDownloadProvider _imageDownloadProvider;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   var picker = ImagePicker();
+  final ScrollController listScrollController = ScrollController();
+  final FocusNode focusNode = FocusNode();
 
   getCamera() async {
     Random random = new Random();
@@ -84,8 +87,11 @@ class _ChatScreenState extends State<ChatScreen> {
     print(pickedFile.path);
     print(filename);
     Navigator.pop(context);
-    String url = await StorageRepo()
-        .uploadChatPic(files, otherUid, filename, _imageUploadProvider);
+    String url = await StorageRepo().uploadChatPic(
+      files,
+      otherUid,
+      filename,
+    );
 
     sendImage(url, filetype, filename, sizes);
   }
@@ -142,34 +148,54 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   showFilePicker(FileType fileType) async {
-    FilePickerResult file = await FilePicker.platform.pickFiles(type: fileType);
+    FilePickerResult file = await FilePicker.platform
+        .pickFiles(type: fileType, allowMultiple: true);
     print(fileType);
-    File files = File(file.files.single.path);
-
-    var fs = filesize(files.lengthSync());
-
-    String sizes = fs;
-
-    String basenames = file.files.single.name;
-    print('a');
+    print(file.files);
+    // File files = File(file.files.single.path);
 
     Navigator.pop(context);
-    String url = await StorageRepo().uploadChatPic(
-      files,
-      otherUid,
-      basenames,
-      _imageUploadProvider,
-    );
+    var url = await StorageRepo()
+        .uploadFiles(file.files, otherUid, _imageUploadProvider);
     print(url);
+    int i;
+    List updata = [];
+    for (i = 0; i < file.files.length; i++) {
+      Map data = Map();
+      data['url'] = url[i];
+      data['file'] = file.files[i];
+      updata.add(data);
+    }
+    print(updata);
 
-    // chatBloc.dispatch(SendAttachmentEvent(chat.chatId,file,fileType));
-    sendImage(url, fileType, basenames, sizes);
-    print(file.paths);
+    updata.forEach((element) {
+      print(element);
+      print(element['url']);
+      print(element['file'].name);
+      Map<String, dynamic> imagedetailMap;
+      imagedetailMap = {
+        "imageUrl": element['url'],
+        "sendBy": selfUid,
+        "isRead" : 'false',
+        "message": element['file'].name,
+        // "lastmessage": basenames.toString(),
+        "time": DateTime.now().millisecondsSinceEpoch,
+        "type": fileType.toString(),
+        "size": filesize(element['file'].size)
+      };
 
-    // GradientSnackBar.showMessage(context, 'Sending attachment..');
+      DatabaseMethods().addImageConvMessage(
+        server["phoneNumber"],
+        imagedetailMap,
+        server["uid"],
+      );
+    });
+    updatetime(file.files.last.name.toString());
   }
 
   sendImage(url, fileType, basenames, sizes) async {
+    settingRoom();
+
     Map<String, dynamic> imagedetailMap = {
       "imageUrl": url.toString(),
       "sendBy": selfUid,
@@ -181,13 +207,11 @@ class _ChatScreenState extends State<ChatScreen> {
     };
     updatetime(basenames.toString().trim());
 
-    DatabaseMethods()
-        .addImageConvMessage(
-          server["phoneNumber"],
-          imagedetailMap,
-          server["uid"],
-        )
-        .then((value) {});
+    DatabaseMethods().addImageConvMessage(
+      server["phoneNumber"],
+      imagedetailMap,
+      server["uid"],
+    );
   }
 
   updatetime(a) async {
@@ -207,36 +231,15 @@ class _ChatScreenState extends State<ChatScreen> {
         .doc(server["uid"] + "_" + _auth.currentUser.uid)
         .update(
             {'time': DateTime.now().millisecondsSinceEpoch, 'lastMessage': a});
-
-    // await FirebaseFirestore.instance
-    //     .collection('ChatRoom')
-    //     .doc(selfphoneNumber)
-    //     .collection('ListUsers')
-    //     .doc((_auth.currentUser.uid + "_" + server["uid"]).toString())
-    //     .update({});
-
-    //  await FirebaseFirestore.instance
-    //     .collection('ChatRoom')
-    //     .doc(server["phoneNumber"])
-    //     .collection('ListUsers')
-    //     .doc(server["uid"] + "_" + _auth.currentUser.uid)
-    //     .update({'lastMessage': a});
   }
 
   sendMessage() async {
     if (messagetext.text.isNotEmpty && messagetext.text.trim().isNotEmpty) {
-      // DatabaseMethods()
-      //     .createChatRoom(
-      //         server["uid"],
-      //         server["phoneNumberWithCountry"].toString(),
-      //         widget.selfchatRoomMap,
-      //         widget.secondchatRoomMap
-      //         );
-
+      settingRoom();
       Map<String, dynamic> messageMap = {
         "message": messagetext.text.toString().trim(),
         "sendBy": selfUid,
-        // "lastmessage": messagetext.text.toString().trim(),
+        'isRead': 'false',
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
@@ -288,10 +291,10 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-//   QuerySnapshot querySnapshot;
-// DocumentSnapshot lastdocument;
   getMessages() async {
-    await DatabaseMethods().getConvoMessage(otherUid).then((value) async {
+    await DatabaseMethods()
+        .getConvoMessage(otherUid, server['phoneNumber'])
+        .then((value) async {
       setState(() {
         chatMessageStream = value;
       });
@@ -309,25 +312,140 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool isLoading = true;
+  settingRoom() async {
+    var currentUid = await StorageRepo().getCurrentUidofUser();
+    var a;
+    var b;
+    var time1;
+    var time2;
+    print(server["uid"]);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(CustomFunctions().shortPhoneNumber(currentUid.phoneNumber))
+          .collection("ListUsers")
+          .doc((currentUid.uid + '_' + server["uid"]))
+          .collection("Chats")
+          .orderBy("time", descending: true)
+          .limit(1)
+          .get()
+          .then((value) async {
+        a = value.docs.first.data();
+        print(a);
+        time1 = a['time'];
+
+        a = a['message'];
+
+        await FirebaseFirestore.instance
+            .collection("ChatRoom")
+            .doc(server['phoneNumber'])
+            .collection("ListUsers")
+            .doc((server['uid'] + "_" + currentUid.uid))
+            .collection("Chats")
+            .orderBy("time", descending: true)
+            .limit(1)
+            .get()
+            .then((value) async {
+          b = value.docs.first.data();
+          print(b);
+          time2 = b['time'];
+          b = b['message'];
+        });
+      });
+// print(a+b);
+    } catch (e) {
+      print(e);
+    }
+
+    List<String> users = [server["uid"], currentUid.uid];
+    List<String> phones = [
+      server["phoneNumberWithCountry"],
+      currentUid.phoneNumber
+    ];
+    final selfPhoneNumber =
+        CustomFunctions().shortPhoneNumber(currentUid.phoneNumber);
+    print(phones);
+    print(users);
+    Map<String, dynamic> selfchatRoomMap = {
+      "users": users,
+      "phoneNumberWithCountry": server["phoneNumberWithCountry"].toString(),
+      "phoneNumber": server["phoneNumber"].toString(),
+      "uid": server["uid"],
+      "time": time1 != null ? time1 : DateTime.now().millisecondsSinceEpoch,
+      "lastMessage": a != null ? a : '',
+      "profilePicture": server["profilePicture"].toString(),
+    };
+    print(users.reversed.toList());
+    Map<String, dynamic> secondchatRoomMap = {
+      "users": users.reversed.toList(),
+      "phoneNumberWithCountry": currentUid.phoneNumber,
+      "phoneNumber": selfPhoneNumber,
+      "uid": currentUid.uid,
+      "time": time2 != null ? time2 : DateTime.now().millisecondsSinceEpoch,
+      "lastMessage": b != null ? b : '',
+      "profilePicture": currentUid.photoURL
+    };
+
+    DatabaseMethods()
+        .createChatRoom(
+            server["uid"],
+            server["phoneNumberWithCountry"].toString(),
+            selfchatRoomMap,
+            secondchatRoomMap)
+        .then((value) {});
+  }
+
+  _scrollListener() {
+    if (listScrollController.offset >=
+            listScrollController.position.maxScrollExtent &&
+        !listScrollController.position.outOfRange) {
+      print("reach the bottom");
+      setState(() {
+        print("reach the bottom");
+        // _limit += _limitIncrement;
+      });
+    }
+    if (listScrollController.offset <=
+            listScrollController.position.minScrollExtent &&
+        !listScrollController.position.outOfRange) {
+      print("reach the top");
+      setState(() {
+        print("reach the top");
+      });
+    }
+  }
+
+  void onFocusChange() {
+    if (focusNode.hasFocus) {
+      // Hide sticker when keyboard appear
+      setState(() {
+        // isShowSticker = false;
+        print('inFocus');
+      });
+    }
+  }
 
   @override
   void initState() {
     // TODO: implement initState
 
+    //  focusNode.addListener(onFocusChange);
+    //   listScrollController.addListener(_scrollListener);
     server = widget.server;
     contact = widget.contact;
     otherUid = server["uid"];
     selfUid = _auth.currentUser.uid;
+
     getMessages();
     _controller.addListener(() {
       double maxScroll = _controller.position.maxScrollExtent;
       double currentScroll = _controller.position.pixels;
-      double delta = MediaQuery.of(context).size.height * 0.20;
+      double delta = MediaQuery.of(context).size.height * 0.03;
       if (maxScroll - currentScroll <= delta) {
         print("upar");
       }
     });
-
     super.initState();
   }
 
@@ -335,6 +453,13 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     // TODO: implement dispose
     // Navigator.pop(context);
+    _imageDownloadProvider.getViewState == ViewState.Loading
+        ? _imageDownloadProvider.setToIdle()
+        : '';
+
+    _imageUploadProvider.getViewState == ViewState.Loading
+        ? _imageUploadProvider.setToIdle()
+        : '';
     super.dispose();
   }
 
@@ -353,7 +478,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
+        elevation: 5,
         automaticallyImplyLeading: false,
         backgroundColor: Color(0xff028090),
         flexibleSpace: SafeArea(
@@ -409,19 +534,28 @@ class _ChatScreenState extends State<ChatScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Text(
-                            contact.displayName,
+                           contact!=null? contact.runtimeType != String 
+                                ? contact?.displayName ??
+                                    server['phoneNumberWithCountry']
+                                : server['phoneNumberWithCountry']:server['phoneNumberWithCountry'],
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(
-                            height: 6,
+                            height: 2,
                           ),
-                          Text(
-                            "Status",
-                            style: TextStyle(color: Colors.white, fontSize: 10),
-                          ),
+                          SizedBox(
+                              height: 20,
+                              child: Padding(
+                                padding: const EdgeInsets.all(2.0),
+                                child: OnlineStatus(server: server),
+                              )),
+                          // Text(
+                          //   "Status",
+                          //   style: TextStyle(color: Colors.white, fontSize: 10),
+                          // ),
                         ],
                       ),
                     ),
@@ -442,88 +576,113 @@ class _ChatScreenState extends State<ChatScreen> {
       //     actions: <Widget>[Icon(Icons.delete), Icon(Icons.more_vert)],
       //     backgroundColor: Color(0xff028090),
       //   ),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 8,
-            child: Container(
-              child: Stack(
-                children: <Widget>[
-                  ChatMessageList(),
-                ],
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/img/wall3.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              // flex: 4,
+              child: Container(
+                //        decoration: BoxDecoration(
+                // image: DecorationImage(
+                //   image: AssetImage(
+                //       'assets/img/wall3.png'),
+                //   fit: BoxFit.fill,
+                // ),),
+                // color: Color(0xff028090).withOpacity(0.18),
+                child: Stack(
+                  children: <Widget>[
+                    Image.asset(
+                      'assets/img/wall3.png',
+                      fit: BoxFit.cover,
+                    ),
+                    ChatMessageList(),
+                  ],
+                ),
               ),
             ),
-          ),
-          _imageUploadProvider.getViewState == ViewState.Loading
-              ? Container(
-                  alignment: Alignment.bottomRight,
-                  margin: EdgeInsets.only(right: 15),
-                  child: CustomprogressIndicator()
-                  //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+            _imageUploadProvider.getViewState == ViewState.Loading
+                ? Container(
+                    alignment: Alignment.bottomRight,
+                    margin: EdgeInsets.only(right: 15),
+                    child: CustomprogressIndicator()
+                    //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                    )
+                : Container(),
+            _imageDownloadProvider.getViewState == ViewState.Loading
+                ? SizedBox(
+                    // height: 50,
+                    // width: 50,
+                    child: Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/img/wall3.png'),
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                        alignment: Alignment.bottomLeft,
+                        margin: EdgeInsets.only(left: 0, top: 3),
+                        child: LinearProgressIndicator(
+                            minHeight: 2,
+                            backgroundColor: MyColors.maincolor,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white))
+                        // CustomprogressIndicator()
+                        //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                        ),
                   )
-              : Container(),
-          _imageDownloadProvider.getViewState == ViewState.Loading
-              ? SizedBox(
-                  // height: 50,
-                  // width: 50,
-                  child: Container(
-                      alignment: Alignment.bottomLeft,
-                      margin: EdgeInsets.only(left: 0, top: 3),
-                      child: LinearProgressIndicator(
-                        minHeight: 2,
-                        backgroundColor: MyColors.maincolor,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      )
-                      // CustomprogressIndicator()
-                      //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                : Container(),
+
+            // ignore: prefer_const_constructors
+            Container(
+              width: MediaQuery.of(context).size.width * 0.99,
+              decoration: BoxDecoration(
+                color: const Color(0xff536162),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        children: [
+                          ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                  maxHeight: 150.0, maxWidth: 300),
+                              child: textInput()),
+                        ],
                       ),
-                )
-              : Container(),
-
-          // ignore: prefer_const_constructors
-          Container(
-            width: MediaQuery.of(context).size.width * 0.99,
-            decoration: BoxDecoration(
-              color: const Color(0xff536162),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Column(
-                      children: [
-                        ConstrainedBox(
-                            constraints: const BoxConstraints(
-                                maxHeight: 150.0, maxWidth: 300),
-                            child: textInput()),
-                      ],
                     ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: InkWell(
-                          onTap: () {
-                            sendMessage();
-                          },
-                          child: Icon(
-                            Icons.send,
-                            color: Colors.white,
-                          )),
-                    ),
-                  )
-                ],
+                    Expanded(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: InkWell(
+                            onTap: () {
+                              sendMessage();
+                            },
+                            child: Icon(
+                              Icons.send,
+                              color: Colors.white,
+                            )),
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // textInput()
-        ],
+            // textInput()
+          ],
+        ),
       ),
     );
   }
@@ -537,8 +696,9 @@ class TileMessage extends StatelessWidget {
   final imageUrl;
   final size;
   final id;
-  TileMessage(this.id, this.type, this.size, this.message, this.isSendByMe,
-      this.timing, this.imageUrl);
+  final bool isRead;
+  TileMessage(this.id, this.type, this.size, this.message, this.isRead,
+      this.isSendByMe, this.timing, this.imageUrl);
 
   bool isDownloading = false;
 
@@ -581,43 +741,75 @@ class TileMessage extends StatelessWidget {
             backgroundColor: MyColors.maincolor,
             //this right here
             child: Container(
-              width: MediaQuery.of(context).size.width,
+              // color: Color(0xff114b5f),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    colors: isSendByMe
+                        ? [
+                            Color(0xff114b5f),
+                            Color(0xff028090),
+                            Color(0xff114b5f)
+                          ]
+                        // [MyColors.maincolor, MyColors.buttoncolor]
+                        : [
+                            Color(0xff114b5f),
+                            Color(0xff028090),
+                            Color(0xff114b5f),
+                          ]),
+              ),
+              width: MediaQuery.of(context).size.width * 0.9,
               height: 100,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      FlatButton(
-                        height: 20,
-                        onPressed: () {
-                          DatabaseMethods()
-                              .deleteConvo(id, server['phoneNumber'], otherUid);
-                          Navigator.pop(context);
-                        },
-                        child: Text(
-                          "Delete for both",
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        // color: const Color(0xFF1BC0C5),
-                      ),
-                      FlatButton(
-                        height: 20,
-                        onPressed: () {
-                          DatabaseMethods().deleteSingleConvo(
-                              id, server['phoneNumber'], otherUid);
-                          Navigator.pop(context);
-                        },
-                        child: Text(
-                          "Delete for me",
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        // color: const Color(0xFF1BC0C5),
-                      )
-                    ],
-                  ),
+                  isSendByMe
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            FlatButton(
+                              height: 40,
+                              onPressed: () {
+                                DatabaseMethods().deleteConvo(
+                                    id, server['phoneNumber'], otherUid);
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                "Delete for both",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              // color: const Color(0xFF1BC0C5),
+                            ),
+                            FlatButton(
+                              height: 40,
+                              onPressed: () {
+                                DatabaseMethods().deleteSingleConvo(
+                                    id, server['phoneNumber'], otherUid);
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                "Delete for me",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              // color: const Color(0xFF1BC0C5),
+                            )
+                          ],
+                        )
+                      : FlatButton(
+                          height: 20,
+                          onPressed: () {
+                            DatabaseMethods().deleteSingleConvo(
+                                id, server['phoneNumber'], otherUid);
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            "Delete for me",
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          // color: const Color(0xFF1BC0C5),
+                        )
                 ],
               ),
             ),
@@ -627,7 +819,9 @@ class TileMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // DateTime myDateTime = timing.toDate();
+    final now = new DateTime.now();
+    var todaysdate = DateFormat.yMMMd().format(now);
+
     ImageDownloadProvider _imageDownloadProvider;
     _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
     final date = DateTime.fromMillisecondsSinceEpoch(timing);
@@ -647,14 +841,14 @@ class TileMessage extends StatelessWidget {
               print(type);
               print(formattedDate);
               print(id);
-              isSendByMe ? showDialogBox(context) : null;
+              showDialogBox(context);
             },
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 5),
+              padding: EdgeInsets.symmetric(horizontal: 8),
 
               margin: isSendByMe
-                  ? const EdgeInsets.only(top: 3, bottom: 5, left: 110)
-                  : const EdgeInsets.only(top: 3, bottom: 5, right: 110),
+                  ? const EdgeInsets.only(top: 3, bottom: 2, left: 108)
+                  : const EdgeInsets.only(top: 3, bottom: 2, right: 108),
               //  height: 210,
               //  width: 200,
               alignment:
@@ -678,14 +872,34 @@ class TileMessage extends StatelessWidget {
                             color: Colors.white,
                           ))
                       : Container(),
-                  Padding(
-                    padding: isSendByMe
-                        ? const EdgeInsets.only(right: 5)
-                        : const EdgeInsets.only(left: 5),
-                    child: Text(formattedDate,
-                        textAlign: isSendByMe ? TextAlign.end : TextAlign.left,
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 9)),
+                  Row(
+                   
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: isSendByMe
+                            ? const EdgeInsets.only(right: 5)
+                            : const EdgeInsets.only(left: 5),
+                        child: Text(
+                            formattedDate.contains(todaysdate)
+                                ? 'Today  ' + time.toString()
+                                : formattedDate,
+                            textAlign:
+                                isSendByMe ? TextAlign.end : TextAlign.left,
+                            style: const TextStyle(
+                                color: Colors.black, fontSize: 9)),
+                      ),
+                    isSendByMe?  isRead
+                          ? Icon(
+                              Icons.done,
+                              size: 15,
+                            )
+                          : Icon(
+                              Icons.done_all,
+                              color: Colors.lightBlue,
+                              size: 15,
+                            ):Container()
+                    ],
                   ),
                 ],
               ),
@@ -697,13 +911,13 @@ class TileMessage extends StatelessWidget {
                   print(type);
                   print(formattedDate);
                   print(id);
-                  isSendByMe ? showDialogBox(context) : null;
+                  showDialogBox(context);
                 },
                 child: Container(
                   margin: isSendByMe
-                      ? const EdgeInsets.only(left: 110, top: 2)
-                      : const EdgeInsets.only(right: 110, top: 2),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                      ? const EdgeInsets.only(left: 110, top: 3)
+                      : const EdgeInsets.only(right: 110, top: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   width: MediaQuery.of(context).size.width * 0.7,
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.70,
@@ -711,8 +925,17 @@ class TileMessage extends StatelessWidget {
                   alignment:
                       isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
-                    padding: EdgeInsets.all(6),
+                    padding: EdgeInsets.all(5),
                     decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            // color: Colors.black,
+                            blurRadius: 2.0,
+                            // spreadRadius: 0.0,
+                            // offset: Offset(
+                            //     0,1.0), // shadow direction: bottom right
+                          ),
+                        ],
                         // color: MyColors.maincolor,
                         gradient: LinearGradient(
                             colors: isSendByMe
@@ -790,19 +1013,43 @@ class TileMessage extends StatelessWidget {
                                   padding: isSendByMe
                                       ? const EdgeInsets.only(right: 1)
                                       : const EdgeInsets.only(left: 1),
-                                  child: Text(formattedDate,
-                                      textAlign: isSendByMe
-                                          ? TextAlign.end
-                                          : TextAlign.left,
-                                      style: const TextStyle(
-                                          color: Colors.white, fontSize: 9)),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(right:2.0),
+                                        child: Text(
+                                            formattedDate.contains(todaysdate)
+                                                ? 'Today  ' + time.toString()
+                                                : formattedDate,
+                                            textAlign: isSendByMe
+                                                ? TextAlign.end
+                                                : TextAlign.left,
+                                            style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9)),
+                                      ),
+                                                isSendByMe?  isRead
+                                    ? Icon(
+                                        Icons.done,
+                                        color: Colors.white,
+                                        size: 15,
+                                      )
+                                    : Icon(
+                                        Icons.done_all,
+                                        color: Colors.lightBlue,
+                                        size: 15,
+                                      ):Container(),
+                                    ],
+                                  ),
                                 ),
+                                 
                               ],
                             ),
                             !isSendByMe
-                                ? Padding(
-                                    padding: const EdgeInsets.only(left: 30),
+                                ? Expanded(
                                     child: Container(
+                                      margin:
+                                          EdgeInsets.only(right: 35, left: 35),
                                       child: RaisedButton(
                                           color: MyColors.maincolor,
                                           onPressed: () {
@@ -828,11 +1075,13 @@ class TileMessage extends StatelessWidget {
                   print(type);
                   print(formattedDate);
                   print(id);
-                  isSendByMe ? showDialogBox(context) : null;
+                  showDialogBox(context);
                 },
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 2),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  margin: isSendByMe
+                      ? const EdgeInsets.only(left: 110, top: 3)
+                      : const EdgeInsets.only(right: 110, top: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   width: MediaQuery.of(context).size.width * 0.7,
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.70,
@@ -840,14 +1089,18 @@ class TileMessage extends StatelessWidget {
                   alignment:
                       isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
-                    margin: isSendByMe
-                        ? const EdgeInsets.only(left: 110)
-                        : const EdgeInsets.only(
-                            right: 110,
-                          ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 7),
                     decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            // color: Colors.black,
+                            blurRadius: 1.0,
+                            // spreadRadius: 0.0,
+                            //   offset: Offset(
+                            //       0,1.0), // shadow direction: bottom right
+                            // )
+                          )
+                        ],
                         gradient: LinearGradient(
                             colors: isSendByMe
                                 ? [Color(0xff114b5f), Color(0xff114b5f)]
@@ -885,11 +1138,39 @@ class TileMessage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 3),
-                        Text(formattedDate,
-                            textAlign:
-                                isSendByMe ? TextAlign.end : TextAlign.left,
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 9))
+                        Padding(
+                          padding: isSendByMe
+                              ? const EdgeInsets.only(right: 1)
+                              : const EdgeInsets.only(left: 1),
+                          child: Row( mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right:2.0),
+                                child: Text(
+                                    formattedDate.contains(todaysdate)
+                                        ? 'Today  ' + time.toString()
+                                        : formattedDate,
+                                    textAlign: isSendByMe
+                                        ? TextAlign.end
+                                        : TextAlign.left,
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 9)),
+                              ),
+                                       isSendByMe? isRead
+                            ? Icon(
+                                Icons.done,
+                                color: Colors.white,
+                                size: 15,
+                              )
+                            : Icon(
+                                Icons.done_all,
+                                color: Colors.lightBlue,
+                                size: 15,
+                              ):Container(),
+                            ],
+                          ),
+                        ),
+                          
                       ],
                     ),
                   ),
@@ -901,28 +1182,45 @@ class TileMessage extends StatelessWidget {
 class ChatMessageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    //  WidgetsBinding.instance.addPostFrameCallback((_) => scroll());
     return StreamBuilder<QuerySnapshot>(
         stream: chatMessageStream,
+        
         builder: (context, snapshot) {
-          print(snapshot.data);
+         update(id){
+            FirebaseFirestore.instance
+            .collection('ChatRoom')
+            .doc(server['phoneNumber'])
+            .collection('ListUsers')
+            .doc((server['uid'] + "_" + selfUid)).collection('Chats').doc(id).update(
+              {
+                 'isRead' : 'true'
+              }
+            );
+         }
+     
           print('inside ot');
+          // if (snapshot.data.docs.where((element) => 
+          
+          // false) .data()["isRead"] == 'false')
           if (snapshot.data == null)
             return Center(child: CustomprogressIndicator());
 
           return ListView.builder(
-              // controller: _controller,
+              controller: _controller,
+              // physics: BouncingScrollPhysics(),
               shrinkWrap: true,
               reverse: true,
 
               // print('hello in list');
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
+            snapshot.data.docs[index].data()["isRead"]=='false'? update(snapshot.data.docs[index].id,):print('updating');
                 return TileMessage(
                     snapshot.data.docs[index].id,
                     snapshot.data.docs[index].data()["type"],
                     snapshot.data.docs[index].data()["size"],
                     snapshot.data.docs[index].data()["message"],
+                    snapshot.data.docs[index].data()["isRead"] == 'false',
                     snapshot.data.docs[index].data()["sendBy"] == selfUid,
                     (snapshot.data.docs[index].data()["time"]),
                     snapshot.data.docs[index].data()["imageUrl"]);

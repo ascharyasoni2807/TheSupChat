@@ -43,7 +43,10 @@ void permissioncheck (context) async {
 final PermissionStatus permissionStatus = await _getPermission();
  if (permissionStatus == PermissionStatus.granted) {
           //We can now access our contacts here
-          //
+                     var reults2 = await Permission.storage.request();
+          var result = await Permission.contacts.request();
+          var resultcamera = await Permission.camera.request();
+          var resulting = await Permission.microphone.request();
           Navigator.push(
               context, MaterialPageRoute(builder: (context) => ContactsPage()));
         } else {

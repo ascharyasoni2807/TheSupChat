@@ -4,8 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:theproject/enum/userState.dart';
 
 import 'package:theproject/repos/customfunctions.dart';
+import 'package:theproject/utilities.dart/utility.dart';
+
+import '../pages/chatScreen.dart';
+import '../pages/chatScreen.dart';
 
 final databaseReference = FirebaseDatabase.instance.reference();
 final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -268,9 +273,27 @@ class DatabaseMethods {
   }
 
   int perPage = 30;
-  getConvoMessage(serveruid) async {
+  getConvoMessage(serveruid,contact) async {
     var user = _auth.currentUser;
     var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
+    var b = await FirebaseFirestore.instance
+            .collection('ChatRoom')
+            .doc(contact)
+            .collection('ListUsers')
+            .doc(serveruid + "_" + _auth.currentUser.uid).collection('Chats').orderBy('time').where('isRead',isEqualTo:'false').get();
+        b.docs.forEach((document) {
+         print(document.id);
+         FirebaseFirestore.instance
+            .collection('ChatRoom')
+            .doc(contact)
+            .collection('ListUsers')
+            .doc((serveruid + "_" + _auth.currentUser.uid)).collection('Chats').doc(document.id).update(
+              {
+                 'isRead' : 'true'
+              }
+            );
+
+         });
 
     return await FirebaseFirestore.instance
         .collection("ChatRoom")
@@ -279,17 +302,12 @@ class DatabaseMethods {
         .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
         .collection("Chats")
         .orderBy("time", descending: true)
-        .limit(perPage)
+        .limit(25)
         .snapshots();
   }
 
   getNextConvo(String chatroomId) async {
-    // return await FirebaseFirestore.instance
-    //       .collection("ChatRoom")
-    //     .doc(_auth.currentUser.phoneNumber)
-    //     .collection("ListUsers").doc((_auth.currentUser.uid.toString()+'_'+serveruid)).collection("Chats")
-    //     .orderBy("time", descending: true).limit(perPage)
-    //     .snapshots();
+  
   }
 
   getHomeUsers() async {
@@ -371,7 +389,8 @@ class DatabaseMethods {
             .doc(phoneNumber)
             .collection('ListUsers')
             .doc((_auth.currentUser.uid + "_" + serveruid))
-            .update({'lastMessage': a['message']});
+            .update({'lastMessage': a['message'],
+                      'time': a['time']});
       });
 
       FirebaseFirestore.instance
@@ -392,7 +411,8 @@ class DatabaseMethods {
             .doc(otherphone)
             .collection('ListUsers')
             .doc(serveruid + "_" + _auth.currentUser.uid)
-            .update({'lastMessage': a['message']});
+            .update({'lastMessage': a['message'],
+            'time': a['time']});
       });
   }
 
@@ -422,6 +442,7 @@ class DatabaseMethods {
           .limit(1)
           .get()
           .then((value) async {
+            
         var a = value.docs.first.data();
         print(a['message']);
 
@@ -430,11 +451,53 @@ class DatabaseMethods {
             .doc(phoneNumber)
             .collection('ListUsers')
             .doc((_auth.currentUser.uid + "_" + serveruid))
-            .update({'lastMessage': a['message']});
+            .update({'lastMessage': a['message'],
+            'time': a['time']});
       });
 
     });
   }
+
+
+
+   void setUserState({ userState}) async {
+      var user = _auth.currentUser;
+    var phoneNumber =
+        CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
+    int stateNum = Utils.stateToNum(userState);
+    
+    await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .update({
+         "state": stateNum,
+      }
+
+      );
+
+   
+  }
+
+
+
+
+   
+ Stream<QuerySnapshot> getListStream()  {
+  return   FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber))
+        .collection("ListUsers")
+        .orderBy("time", descending: true)
+        .snapshots();
+
+  }
+
+  Stream<DocumentSnapshot> getUserStream(uid) {
+    return FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid).snapshots();
+  }
+     
 
   Future<void> savePhonenumber(phone) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

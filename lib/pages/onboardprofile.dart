@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:theproject/enum/view_state.dart';
 import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/bottomsheet.dart';
 import 'package:theproject/providers/imageuploadprovider.dart';
@@ -17,6 +19,7 @@ import 'package:theproject/theme.dart';
 import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/pages/home_page.dart';
 import 'package:theproject/repos/storage_repo.dart';
+import 'package:theproject/widgets/cirindi.dart';
 
 
 class OnboardProfilePage extends StatefulWidget {
@@ -124,6 +127,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
     return Scaffold(
       appBar: AppBar(
           backgroundColor: MyColors.maincolor, title: Text('Profile Info')),
@@ -131,175 +135,188 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
         height: double.infinity,
         width: double.infinity,
         color: Colors.grey[400],
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Stack(children: [
-                // Container(
-                //   height: MediaQuery.of(context).size.height * 0.22,
-                //   decoration: BoxDecoration(
-                //     color: MyColors.maincolor,
-                //     borderRadius: BorderRadius.only(
-                //       bottomLeft: Radius.circular(80.0),
-                //       bottomRight: Radius.circular(80.0),
-                //     ),
-                //   ),
-                // ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Stack(children: [
-                        GestureDetector(
-                          onTap: getImage,
-                          child: CircleAvatar(
-                            radius: 80,
-                            backgroundColor: Colors.black,
-                            child: ClipOval(
-                              child: AspectRatio(
-                                aspectRatio: 1,
-                                child: SizedBox(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    child: isCompleted
-                                        ? (userPhotos != null)
-                                            ? CachedNetworkImage(
-                                                imageUrl: userPhotos,
-                                                progressIndicatorBuilder:
-                                                    (context, url,
-                                                            downloadProgress) =>
-                                                        CircularProgressIndicator(
-                                                            value:
-                                                                downloadProgress
-                                                                    .progress),
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        Icon(Icons.error),
-                                              )
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  Stack(children: [
+                    // Container(
+                    //   height: MediaQuery.of(context).size.height * 0.22,
+                    //   decoration: BoxDecoration(
+                    //     color: MyColors.maincolor,
+                    //     borderRadius: BorderRadius.only(
+                    //       bottomLeft: Radius.circular(80.0),
+                    //       bottomRight: Radius.circular(80.0),
+                    //     ),
+                    //   ),
+                    // ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(children: [
+                            GestureDetector(
+                              onTap: getImage,
+                              child: CircleAvatar(
+                                radius: 80,
+                                backgroundColor: Colors.black,
+                                child: ClipOval(
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: SizedBox(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        child: isCompleted
+                                            ? (userPhotos != null)
+                                                ? CachedNetworkImage(
+                                                    imageUrl: userPhotos,
+                                                    progressIndicatorBuilder:
+                                                        (context, url,
+                                                                downloadProgress) =>
+                                                            CircularProgressIndicator(
+                                                                value:
+                                                                    downloadProgress
+                                                                        .progress),
+                                                    errorWidget:
+                                                        (context, url, error) =>
+                                                            Icon(Icons.error),
+                                                  )
 
-                                            //  Image.network(
-                                            //  userPhotos,
-                                            //   fit: BoxFit.fill,
-                                            // )
-                                            : Image.asset('assets/img/pp.png')
-                                        : Image.asset('assets/img/pp.png')),
+                                                //  Image.network(
+                                                //  userPhotos,
+                                                //   fit: BoxFit.fill,
+                                                // )
+                                                : Image.asset('assets/img/pp.png')
+                                            : Image.asset('assets/img/pp.png')),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: getImage,
-                          child: Padding(
-                              padding: EdgeInsets.only(top: 110.0, left: 110.0),
-                              child: new Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  new CircleAvatar(
-                                    backgroundColor:MyColors.maincolor,
-                                    radius: 20.0,
-                                    child: new Icon(
-                                      Icons.camera_alt,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                ],
-                              )),
-                        ),
-                      ]),
-                    ],
-                  ),
-                ),
-              ]),
-              SizedBox(
-                height:20
-              ),
-              Container(
-                width: MediaQuery.of(context).size.width * 0.75,
-                height: 80,
-                child: Card(
-                  color: MyColors.maincolor,
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.people_alt,
-                      color: Colors.white,
-                    ),
-                    trailing: InkWell(
-                      splashColor: Colors.transparent,
-                      child: Icon(
-                        Icons.edit,
-                        color: Colors.white,
+                            GestureDetector(
+                              onTap: getImage,
+                              child: Padding(
+                                  padding: EdgeInsets.only(top: 110.0, left: 110.0),
+                                  child: new Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      new CircleAvatar(
+                                        backgroundColor:MyColors.maincolor,
+                                        radius: 20.0,
+                                        child: new Icon(
+                                          Icons.camera_alt,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    ],
+                                  )),
+                            ),
+                          ]),
+                        ],
                       ),
-                      onTap: () {
-                        print("name changinng");
-                        TextEditingController nameofuser = TextEditingController();
-                        ImageUploadProvider imageUploadProvider;
-                        showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: false,
-                            builder: (context) => SingleChildScrollView(
-                                    child: Container(
-                                  child: Container(child: BottomSheetExample(imageUploadProvider:imageUploadProvider,nameofuser:nameofuser)),
-                                )));
-                      },
                     ),
-                    title: Row(
-                      children: [
-                        Flexible(
-                            child: Text(
-                                nameofuser != null
-                                    ? "$nameofuser"
-                                    : "Enter Name",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.white)))
-                      ],
+                  ]),
+                  SizedBox(
+                    height:20
+                  ),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    height: 80,
+                    child: Card(
+                      color: MyColors.maincolor,
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.people_alt,
+                          color: Colors.white,
+                        ),
+                        trailing: InkWell(
+                          splashColor: Colors.transparent,
+                          child: Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                          ),
+                          onTap: () {
+                            print("name changinng");
+                            TextEditingController nameofuser = TextEditingController();
+                        
+                            showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: false,
+                                builder: (context) => SingleChildScrollView(
+                                        child: Container(
+                                      child: Container(child: BottomSheetExample(imageUploadProvider:_imageUploadProvider,nameofuser:nameofuser)),
+                                    )));
+                          },
+                        ),
+                        title: Row(
+                          children: [
+                            Flexible(
+                                child: Text(
+                                    nameofuser != null
+                                        ? "$nameofuser"
+                                        : "Enter Name",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        color: Colors.white)))
+                          ],
+                        ),
+                        // subtitle: Text("Your Name ",
+                        //     style: TextStyle(color: Colors.grey[400])),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      elevation: 5,
+                      margin: EdgeInsets.all(10),
                     ),
-                    subtitle: Text("Your Name ",
-                        style: TextStyle(color: Colors.grey[400])),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+                   Container(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    height: 60,
+                    child: Card(
+                      color: MyColors.maincolor,
+                      child: ListTile(
+                        leading:   Icon(Icons.phone,color: Colors.white,),
+                        title:   Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Flexible(
+                              child: Text("$phoneNumberuser",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: Colors.white)))
+                        ],
+                      ),
+                      ),
+                       shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      elevation: 5,
+                    ),
+                  
                   ),
-                  elevation: 5,
-                  margin: EdgeInsets.all(10),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                        child: Text(
+                            "Your profile is end-to-end encrypted.  Your Profile And changes will be visible to your contacts.",style: TextStyle(fontSize: 10,color: Colors.grey[700]),)),
+                  )
+                ],
               ),
-               Container(
-                width: MediaQuery.of(context).size.width * 0.75,
-                height: 60,
-                child: Card(
-                  color: MyColors.maincolor,
-                  child: ListTile(
-                    leading:   Icon(Icons.phone,color: Colors.white,),
-                    title:   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Flexible(
-                          child: Text("$phoneNumberuser",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: Colors.white)))
-                    ],
-                  ),
-                  ),
-                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  elevation: 5,
-                ),
-              
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Container(
-                    child: Text(
-                        "Your profile is end-to-end encrypted.  Your Profile And changes will be visible to your contacts.")),
-              )
-            ],
-          ),
+            ),
+               _imageUploadProvider.getViewState == ViewState.Loading
+              ? Container(
+                
+                  alignment: Alignment.center,
+                  margin: EdgeInsets.only(right: 15),
+                  child: CustomprogressIndicator()
+                  //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                  )
+              : Container(),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -332,7 +349,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
       "uid": user.uid,
       "phoneNumberWithCountry": user.phoneNumber,
       "phoneNumber": phoneNumber,
-      "newuser": true.toString(),
+      "status": '',
       "createdON": DateTime.now().millisecondsSinceEpoch,
       "DateCreated" : formatter,
       "name": null,

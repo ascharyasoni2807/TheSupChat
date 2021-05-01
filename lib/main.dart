@@ -5,11 +5,14 @@ import 'package:theproject/pages/profilepage.dart';
 import 'package:theproject/pages/splash_page.dart';
 import 'package:theproject/providers/imagedownloadprovider.dart';
 import 'package:theproject/providers/imageuploadprovider.dart';
+import 'package:theproject/providers/userprovider.dart';
 import 'package:theproject/stores/login_store.dart';
 import 'package:theproject/stores/profileStore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+   Provider.debugCheckInvalidValueType = null;
+
   await Firebase.initializeApp();
   
 runApp(App());
@@ -31,6 +34,8 @@ class _AppState extends State<App> {
         Provider<ProfileStore>(
           create: (_) => ProfileStore(),
         ),
+         Provider<UserProvider>(
+          create: (_) => UserProvider(),),
         ChangeNotifierProvider<ImageUploadProvider>(
           create: (_) =>ImageUploadProvider(),
         ),
