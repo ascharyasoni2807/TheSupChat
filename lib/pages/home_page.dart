@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 import 'package:vector_math/vector_math.dart' as math;
@@ -63,6 +64,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void initState() {
+
+  
+FirebaseMessaging.instance.getToken().then((token){
+  print("token $token");
+}); 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       userProvider = Provider.of<UserProvider>(context, listen: false);
       await userProvider.refreshUser();
@@ -287,7 +293,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         color: Colors.white,
                       ),
                       onPressed: () {
-                        loginStore.signOut(context);
+                        // loginStore.signOut(context);
+
+                        print(DatabaseMethods().getFcmToken());
 
                         print("about to logout");
                       },

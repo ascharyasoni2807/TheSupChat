@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theproject/enum/userState.dart';
 
@@ -306,8 +307,10 @@ class DatabaseMethods {
         .snapshots();
   }
 
-  getNextConvo(String chatroomId) async {
-  
+  getFcmToken() async {
+   var tok= await FirebaseMessaging.instance.getToken();
+
+   return tok;
   }
 
   getHomeUsers() async {

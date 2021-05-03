@@ -872,15 +872,13 @@ class TileMessage extends StatelessWidget {
                             color: Colors.white,
                           ))
                       : Container(),
-                  Row(
-                   
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Padding(
-                        padding: isSendByMe
-                            ? const EdgeInsets.only(right: 5)
-                            : const EdgeInsets.only(left: 5),
-                        child: Text(
+                  Padding(
+                    padding: isSendByMe
+                        ? const EdgeInsets.only(right: 5)
+                        : const EdgeInsets.only(left: 5),
+                    child: Row(
+                      children: [
+                        Text(
                             formattedDate.contains(todaysdate)
                                 ? 'Today  ' + time.toString()
                                 : formattedDate,
@@ -888,8 +886,7 @@ class TileMessage extends StatelessWidget {
                                 isSendByMe ? TextAlign.end : TextAlign.left,
                             style: const TextStyle(
                                 color: Colors.black, fontSize: 9)),
-                      ),
-                    isSendByMe?  isRead
+                                  isSendByMe?  isRead
                           ? Icon(
                               Icons.done,
                               size: 15,
@@ -899,7 +896,8 @@ class TileMessage extends StatelessWidget {
                               color: Colors.lightBlue,
                               size: 15,
                             ):Container()
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1079,8 +1077,8 @@ class TileMessage extends StatelessWidget {
                 },
                 child: Container(
                   margin: isSendByMe
-                      ? const EdgeInsets.only(left: 110, top: 3)
-                      : const EdgeInsets.only(right: 110, top: 3),
+                      ? const EdgeInsets.only(left: 110, top: 5)
+                      : const EdgeInsets.only(right: 110, top: 5),
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   width: MediaQuery.of(context).size.width * 0.7,
                   constraints: BoxConstraints(
@@ -1186,16 +1184,19 @@ class ChatMessageList extends StatelessWidget {
         stream: chatMessageStream,
         
         builder: (context, snapshot) {
-         update(id){
-            FirebaseFirestore.instance
+         update(id) async{
+          try{ await FirebaseFirestore.instance
             .collection('ChatRoom')
             .doc(server['phoneNumber'])
             .collection('ListUsers')
-            .doc((server['uid'] + "_" + selfUid)).collection('Chats').doc(id).update(
+            .doc((server['uid'] + "_" + selfUid)).collection('Chats').doc(id)
+            .update(
               {
                  'isRead' : 'true'
               }
-            );
+            );}catch(e){
+              print(e);
+            }
          }
      
           print('inside ot');
