@@ -24,6 +24,7 @@ import 'package:theproject/providers/imageuploadprovider.dart';
 import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/repos/storage_repo.dart';
 import 'package:theproject/theme.dart';
+import 'package:theproject/utils/call_utilities.dart';
 import 'package:theproject/widgets/cachedImage.dart';
 import 'package:theproject/widgets/cirindi.dart';
 import 'package:theproject/pages/previewImage.dart';
@@ -99,6 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
   showAttachmentBottomSheet(context) {
     showModalBottomSheet(
         context: context,
+        elevation:0,
         builder: (BuildContext bc) {
           return Container(
             child: Wrap(
@@ -425,7 +427,28 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
   }
+Map sender = Map();
+Map receiver = Map();
+setDataCall()async{
+   var profilePhoto = await DatabaseMethods().getPhotoUrlofanyUser(_auth.currentUser.uid);
+   var selfNumber = CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber);
+   setState(() {
+     sender = {
+      'uid': _auth.currentUser.uid,
+      'number': selfNumber,
+      'profilePhoto': profilePhoto 
+    };
 
+    receiver ={
+       'uid': server['uid'],
+      'number': server['phoneNumber'],
+      'profilePhoto': server['profilePicture']
+
+    };
+   });
+    
+
+}
   @override
   void initState() {
     // TODO: implement initState
@@ -436,16 +459,18 @@ class _ChatScreenState extends State<ChatScreen> {
     contact = widget.contact;
     otherUid = server["uid"];
     selfUid = _auth.currentUser.uid;
+     
+    setDataCall();
 
     getMessages();
-    _controller.addListener(() {
-      double maxScroll = _controller.position.maxScrollExtent;
-      double currentScroll = _controller.position.pixels;
-      double delta = MediaQuery.of(context).size.height * 0.03;
-      if (maxScroll - currentScroll <= delta) {
-        print("upar");
-      }
-    });
+    // _controller.addListener(() {
+    //   double maxScroll = _controller.position.maxScrollExtent;
+    //   double currentScroll = _controller.position.pixels;
+    //   double delta = MediaQuery.of(context).size.height * 0.03;
+    //   if (maxScroll - currentScroll <= delta) {
+    //     print("upar");
+    //   }
+    // });
     super.initState();
   }
 
@@ -460,6 +485,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _imageUploadProvider.getViewState == ViewState.Loading
         ? _imageUploadProvider.setToIdle()
         : '';
+
+        chatMessageStream=null;
     super.dispose();
   }
 
@@ -478,6 +505,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        
         elevation: 5,
         automaticallyImplyLeading: false,
         backgroundColor: Color(0xff028090),
@@ -561,6 +589,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                 ),
+                //  IconBSSS
                 // const Icon(
                 //   Icons.settings,
                 //   color: Colors.black54,
@@ -874,9 +903,10 @@ class TileMessage extends StatelessWidget {
                       : Container(),
                   Padding(
                     padding: isSendByMe
-                        ? const EdgeInsets.only(right: 5)
-                        : const EdgeInsets.only(left: 5),
+                        ? const EdgeInsets.only(right: 2)
+                        : const EdgeInsets.only(left: 2),
                     child: Row(
+                      mainAxisAlignment: isSendByMe? MainAxisAlignment.end: MainAxisAlignment.start,
                       children: [
                         Text(
                             formattedDate.contains(todaysdate)
@@ -886,7 +916,7 @@ class TileMessage extends StatelessWidget {
                                 isSendByMe ? TextAlign.end : TextAlign.left,
                             style: const TextStyle(
                                 color: Colors.black, fontSize: 9)),
-                                  isSendByMe?  isRead
+                                   isSendByMe?  isRead
                           ? Icon(
                               Icons.done,
                               size: 15,

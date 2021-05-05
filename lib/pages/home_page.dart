@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   LoginStore loginStore = LoginStore();
   List users = [];
   FirebaseFirestore firestoreInstance = FirebaseFirestore.instance;
-  UserProvider userProvider;
+  UserStatusProvider userProvider;
   // listalluser() async {
   //   firestoreInstance
   //       .collection("users")
@@ -66,11 +66,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
 
   
-FirebaseMessaging.instance.getToken().then((token){
-  print("token $token");
-}); 
+// FirebaseMessaging.instance.getToken().then((token){
+//   print("token $token");
+// }); 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      userProvider = Provider.of<UserProvider>(context, listen: false);
+      userProvider = Provider.of<UserStatusProvider>(context, listen: false);
       await userProvider.refreshUser();
 
       DatabaseMethods().setUserState(
@@ -90,7 +90,6 @@ FirebaseMessaging.instance.getToken().then((token){
   List foundusers = [];
   final phonenumber = [];
   String selfPhone;
-
   getContacts() async {
     final Iterable<Contact> contacts = await ContactsService.getContacts(
       withThumbnails: false,
@@ -108,6 +107,8 @@ FirebaseMessaging.instance.getToken().then((token){
       });
       phonenumber.addAll(element.phones
           .map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
+    });
+    setState(() {
     });
   }
 
@@ -191,7 +192,8 @@ FirebaseMessaging.instance.getToken().then((token){
         stream: chatroomstream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           return snapshot.hasData && snapshot.data.docs.isNotEmpty
-              ? FutureBuilder(
+              ?  FutureBuilder(
+                
                   future: values(snapshot.data),
                   builder: (context, snap) {
                     return snap.hasData
@@ -293,9 +295,12 @@ FirebaseMessaging.instance.getToken().then((token){
                         color: Colors.white,
                       ),
                       onPressed: () {
-                        // loginStore.signOut(context);
+                         DatabaseMethods().setUserState(
+        userState: UserState.Offline,
+      );
+                        loginStore.signOut(context);
 
-                        print(DatabaseMethods().getFcmToken());
+                      
 
                         print("about to logout");
                       },
@@ -389,9 +394,10 @@ class Chatroomtile extends StatelessWidget {
   var image;
 
   Chatroomtile({this.userName, this.server, this.contact, this.image});
-
+  
   @override
   Widget build(BuildContext context) {
+  
     final now = new DateTime.now();
     var todaysdate = DateFormat.yMMMd().format(now);
     print(todaysdate);
@@ -424,18 +430,15 @@ class Chatroomtile extends StatelessWidget {
                           height: 50,
                           width: 50,
                           child: (image != null)
-                              ? Hero(
-                                  tag: 'imagess',
-                                  child: CachedNetworkImage(
-                                    imageUrl: image ?? "",
-                                    progressIndicatorBuilder: (context, url,
-                                            downloadProgress) =>
-                                        CircularProgressIndicator(
-                                            value: downloadProgress.progress),
-                                    errorWidget: (context, url, error) =>
-                                        Icon(Icons.error),
-                                  ),
-                                )
+                              ? CachedNetworkImage(
+                                imageUrl: image ?? "",
+                                progressIndicatorBuilder: (context, url,
+                                        downloadProgress) =>
+                                    CircularProgressIndicator(
+                                        value: downloadProgress.progress),
+                                errorWidget: (context, url, error) =>
+                                    Icon(Icons.error),
+                              )
                               : Image.asset('assets/img/pp.png')),
                     ),
                   ),

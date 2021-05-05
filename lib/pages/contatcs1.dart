@@ -185,6 +185,30 @@ class _ContactsPageState extends State<ContactsPage> {
     });
   }
 
+// var items;
+// void filterSearchResults(String query) {
+//     List<dynamic> dummySearchList ;
+//     dummySearchList.addAll(foundusers);
+//     if(query.isNotEmpty) {
+//       List<dynamic> dummyListData ;
+//       dummySearchList.forEach((item) {
+//         if(item.contains(query)) s{
+//           dummyListData.add(item);
+//         }
+//       });
+//       setState(() {
+//         items.clear();
+//         items.addAll(dummyListData);
+//       });
+//       return;
+//     } else {
+//       setState(() {
+//         items.clear();
+//         items.addAll(foundusers);
+//       });
+//     }
+
+//   }
  
 
   Icon actionIcon = new Icon(Icons.search);
@@ -210,9 +234,13 @@ class _ContactsPageState extends State<ContactsPage> {
                     autocorrect: false,
                     style: TextStyle(color: Colors.white, fontSize: 18),
                     // controller: searchController,
+                    onChanged: (value){
+                      print(value);
+                      // filterSearchResults(value);
+                    },
                     decoration: new InputDecoration(
-                        hintText: "Search...",
-                        hintStyle: new TextStyle(color: Colors.white)),
+                        hintText: "developing this feature",
+                        hintStyle: new TextStyle(color: Colors.white30,)),
                   );
                 } else {
                   this.actionIcon = new Icon(Icons.search);
@@ -244,9 +272,9 @@ class _ContactsPageState extends State<ContactsPage> {
                       //  setState(() {
                       //      isbuilding = true;
                       //  });
-
+                        //  contact.displayName.contains()==searchController;
                       return contact != null
-                          ? Card(child: Container(
+                          ? Container(
                                 padding: EdgeInsets.only(top:1),
                                 child: InkWell(
                                   onTap: () {
@@ -320,8 +348,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                     // onPressed().
                                   ),
                                 ),
-                              ),
-                          )
+                              )
                           : SizedBox.shrink();
                     },
                   )
