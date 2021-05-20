@@ -325,7 +325,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
         elevation: 10,
         onPressed: () async {
           print("Hello World");
-          if (nameofuser.toString().isNotEmpty){
+          if (nameofuser!=null && nameofuser.toString().isNotEmpty){
           print(widget.user.phoneNumber);
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => HomePage()),

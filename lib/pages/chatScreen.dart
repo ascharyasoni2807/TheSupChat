@@ -24,7 +24,7 @@ import 'package:theproject/providers/imageuploadprovider.dart';
 import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/repos/storage_repo.dart';
 import 'package:theproject/theme.dart';
-import 'package:theproject/utils/call_utilities.dart';
+// import 'package:theproject/utils/call_utilities.dart';
 import 'package:theproject/widgets/cachedImage.dart';
 import 'package:theproject/widgets/cirindi.dart';
 import 'package:theproject/pages/previewImage.dart';
@@ -69,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
   var picker = ImagePicker();
   final ScrollController listScrollController = ScrollController();
   final FocusNode focusNode = FocusNode();
-
+  bool isWriting = false;
   getCamera() async {
     Random random = new Random();
     int randomNumber = random.nextInt(999999);
@@ -100,7 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
   showAttachmentBottomSheet(context) {
     showModalBottomSheet(
         context: context,
-        elevation:0,
+        elevation: 0,
         builder: (BuildContext bc) {
           return Container(
             child: Wrap(
@@ -178,7 +178,7 @@ class _ChatScreenState extends State<ChatScreen> {
       imagedetailMap = {
         "imageUrl": element['url'],
         "sendBy": selfUid,
-        "isRead" : 'false',
+        "isRead": 'false',
         "message": element['file'].name,
         // "lastmessage": basenames.toString(),
         "time": DateTime.now().millisecondsSinceEpoch,
@@ -245,6 +245,9 @@ class _ChatScreenState extends State<ChatScreen> {
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
+      setState(() {
+        isWriting = false;
+      });
 
       await DatabaseMethods()
           .addConvMessage(
@@ -263,6 +266,12 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  setWritingTo(bool val) {
+    setState(() {
+      isWriting = val;
+    });
+  }
+
   // FocusNode focusNode = FocusNode();
   Widget textInput() {
     return TextField(
@@ -271,6 +280,11 @@ class _ChatScreenState extends State<ChatScreen> {
       style: TextStyle(fontSize: 19, color: Colors.white),
       maxLines: null,
       controller: messagetext,
+      onChanged: (val) {
+        (val.length > 0 && val.trim() != "")
+            ? setWritingTo(true)
+            : setWritingTo(false);
+      },
       // onTap: () {
 
       // },
@@ -361,12 +375,22 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     List<String> users = [server["uid"], currentUid.uid];
+
     List<String> phones = [
       server["phoneNumberWithCountry"],
       currentUid.phoneNumber
     ];
+    users.sort();
+    phones.sort();
+    print(users);
+    print(phones);
     final selfPhoneNumber =
         CustomFunctions().shortPhoneNumber(currentUid.phoneNumber);
+    final otherPhoneNumber =
+        CustomFunctions().shortPhoneNumber(server['phoneNumberWithCountry']);
+    final phonesWithoutCountry = [selfPhoneNumber, otherPhoneNumber];
+    phonesWithoutCountry.sort();
+    print(phonesWithoutCountry);
     print(phones);
     print(users);
     Map<String, dynamic> selfchatRoomMap = {
@@ -383,6 +407,16 @@ class _ChatScreenState extends State<ChatScreen> {
       "users": users.reversed.toList(),
       "phoneNumberWithCountry": currentUid.phoneNumber,
       "phoneNumber": selfPhoneNumber,
+      "uid": currentUid.uid,
+      "time": time2 != null ? time2 : DateTime.now().millisecondsSinceEpoch,
+      "lastMessage": b != null ? b : '',
+      "profilePicture": currentUid.photoURL
+    };
+
+    Map<String, dynamic> primaryMap = {
+      "users": users,
+      "phoneNumberWithCountry": phonesWithoutCountry,
+      "phoneNumber": phones,
       "uid": currentUid.uid,
       "time": time2 != null ? time2 : DateTime.now().millisecondsSinceEpoch,
       "lastMessage": b != null ? b : '',
@@ -427,28 +461,29 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
   }
-Map sender = Map();
-Map receiver = Map();
-setDataCall()async{
-   var profilePhoto = await DatabaseMethods().getPhotoUrlofanyUser(_auth.currentUser.uid);
-   var selfNumber = CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber);
-   setState(() {
-     sender = {
-      'uid': _auth.currentUser.uid,
-      'number': selfNumber,
-      'profilePhoto': profilePhoto 
-    };
 
-    receiver ={
-       'uid': server['uid'],
-      'number': server['phoneNumber'],
-      'profilePhoto': server['profilePicture']
+  Map sender = Map();
+  Map receiver = Map();
+  setDataCall() async {
+    var profilePhoto =
+        await DatabaseMethods().getPhotoUrlofanyUser(_auth.currentUser.uid);
+    var selfNumber =
+        CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber);
+    setState(() {
+      sender = {
+        'uid': _auth.currentUser.uid,
+        'number': selfNumber,
+        'profilePhoto': profilePhoto
+      };
 
-    };
-   });
-    
+      receiver = {
+        'uid': server['uid'],
+        'number': server['phoneNumber'],
+        'profilePhoto': server['profilePicture']
+      };
+    });
+  }
 
-}
   @override
   void initState() {
     // TODO: implement initState
@@ -459,7 +494,7 @@ setDataCall()async{
     contact = widget.contact;
     otherUid = server["uid"];
     selfUid = _auth.currentUser.uid;
-     
+
     setDataCall();
 
     getMessages();
@@ -486,7 +521,7 @@ setDataCall()async{
         ? _imageUploadProvider.setToIdle()
         : '';
 
-        chatMessageStream=null;
+    chatMessageStream = null;
     super.dispose();
   }
 
@@ -505,7 +540,6 @@ setDataCall()async{
 
     return Scaffold(
       appBar: AppBar(
-        
         elevation: 5,
         automaticallyImplyLeading: false,
         backgroundColor: Color(0xff028090),
@@ -548,7 +582,7 @@ setDataCall()async{
                 Expanded(
                   child: InkWell(
                     onTap: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                           context,
                           CupertinoPageRoute(
                               builder: (context) => OtherProfileView(
@@ -562,10 +596,12 @@ setDataCall()async{
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Text(
-                           contact!=null? contact.runtimeType != String 
-                                ? contact?.displayName ??
-                                    server['phoneNumberWithCountry']
-                                : server['phoneNumberWithCountry']:server['phoneNumberWithCountry'],
+                            contact != null
+                                ? contact.runtimeType != String
+                                    ? contact?.displayName ??
+                                        server['phoneNumberWithCountry']
+                                    : server['phoneNumberWithCountry']
+                                : server['phoneNumberWithCountry'],
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -668,45 +704,88 @@ setDataCall()async{
                 : Container(),
 
             // ignore: prefer_const_constructors
-            Container(
-              width: MediaQuery.of(context).size.width * 0.99,
-              decoration: BoxDecoration(
-                color: const Color(0xff536162),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 5,
-                      child: Column(
+            Row(
+              children: [
+                Expanded(
+                  // flex: 10,
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.99,
+                    decoration: BoxDecoration(
+                      color: const Color(0xff536162),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Row(
                         children: [
-                          ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                  maxHeight: 150.0, maxWidth: 300),
-                              child: textInput()),
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              children: [
+                                ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                        maxHeight: 150.0, maxWidth: 300),
+                                    child: textInput()),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: InkWell(
-                            onTap: () {
-                              sendMessage();
-                            },
-                            child: Icon(
-                              Icons.send,
-                              color: Colors.white,
-                            )),
-                      ),
-                    )
-                  ],
+                  ),
                 ),
-              ),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Color(0xff114b5f), Color(0xff114b5f)],
+                    ),
+                  ),
+                  margin: EdgeInsets.only(right: 10),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: Icon(
+                      Icons.send,
+                    ),
+                    color: Colors.white,
+                    onPressed: () {
+                      sendMessage();
+                    },
+                  ),
+                )
+                // :Container(
+                //   decoration: BoxDecoration(
+                //      shape: BoxShape.circle,
+                //     gradient: LinearGradient(
+                //     colors: [
+                //             Color(0xff114b5f),
+                //             Color(0xff114b5f)
+                //           ],
+                //   ),),
+                //   margin: EdgeInsets.only(right:10),
+                //   child: IconButton(
+                //     padding: EdgeInsets.zero,
+                //     icon: Icon(
+                //       Icons.mic,
+                //     ),
+                //     color: Colors.white,
+
+                //     onPressed: () {
+                //       // sendMessage();
+                //     },
+                //   ),
+                // ),
+
+                //  IconButton(
+                //      icon: Icon(
+                //        Icons.send,
+                //        size: 20,
+                //      ),
+                //      onPressed: () => sendMessage(),
+                //    )
+              ],
             ),
 
             // textInput()
@@ -906,7 +985,9 @@ class TileMessage extends StatelessWidget {
                         ? const EdgeInsets.only(right: 2)
                         : const EdgeInsets.only(left: 2),
                     child: Row(
-                      mainAxisAlignment: isSendByMe? MainAxisAlignment.end: MainAxisAlignment.start,
+                      mainAxisAlignment: isSendByMe
+                          ? MainAxisAlignment.end
+                          : MainAxisAlignment.start,
                       children: [
                         Text(
                             formattedDate.contains(todaysdate)
@@ -916,16 +997,18 @@ class TileMessage extends StatelessWidget {
                                 isSendByMe ? TextAlign.end : TextAlign.left,
                             style: const TextStyle(
                                 color: Colors.black, fontSize: 9)),
-                                   isSendByMe?  isRead
-                          ? Icon(
-                              Icons.done,
-                              size: 15,
-                            )
-                          : Icon(
-                              Icons.done_all,
-                              color: Colors.lightBlue,
-                              size: 15,
-                            ):Container()
+                        isSendByMe
+                            ? isRead
+                                ? Icon(
+                                    Icons.done,
+                                    size: 15,
+                                  )
+                                : Icon(
+                                    Icons.done_all,
+                                    color: Colors.lightBlue,
+                                    size: 15,
+                                  )
+                            : Container()
                       ],
                     ),
                   ),
@@ -1044,7 +1127,8 @@ class TileMessage extends StatelessWidget {
                                   child: Row(
                                     children: [
                                       Padding(
-                                        padding: const EdgeInsets.only(right:2.0),
+                                        padding:
+                                            const EdgeInsets.only(right: 2.0),
                                         child: Text(
                                             formattedDate.contains(todaysdate)
                                                 ? 'Today  ' + time.toString()
@@ -1056,21 +1140,22 @@ class TileMessage extends StatelessWidget {
                                                 color: Colors.white,
                                                 fontSize: 9)),
                                       ),
-                                                isSendByMe?  isRead
-                                    ? Icon(
-                                        Icons.done,
-                                        color: Colors.white,
-                                        size: 15,
-                                      )
-                                    : Icon(
-                                        Icons.done_all,
-                                        color: Colors.lightBlue,
-                                        size: 15,
-                                      ):Container(),
+                                      isSendByMe
+                                          ? isRead
+                                              ? Icon(
+                                                  Icons.done,
+                                                  color: Colors.white,
+                                                  size: 15,
+                                                )
+                                              : Icon(
+                                                  Icons.done_all,
+                                                  color: Colors.lightBlue,
+                                                  size: 15,
+                                                )
+                                          : Container(),
                                     ],
                                   ),
                                 ),
-                                 
                               ],
                             ),
                             !isSendByMe
@@ -1117,7 +1202,7 @@ class TileMessage extends StatelessWidget {
                   alignment:
                       isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 7),
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                     decoration: BoxDecoration(
                         boxShadow: [
                           BoxShadow(
@@ -1170,10 +1255,11 @@ class TileMessage extends StatelessWidget {
                           padding: isSendByMe
                               ? const EdgeInsets.only(right: 1)
                               : const EdgeInsets.only(left: 1),
-                          child: Row( mainAxisSize: MainAxisSize.min,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(right:2.0),
+                                padding: const EdgeInsets.only(right: 2.0),
                                 child: Text(
                                     formattedDate.contains(todaysdate)
                                         ? 'Today  ' + time.toString()
@@ -1184,21 +1270,22 @@ class TileMessage extends StatelessWidget {
                                     style: const TextStyle(
                                         color: Colors.white, fontSize: 9)),
                               ),
-                                       isSendByMe? isRead
-                            ? Icon(
-                                Icons.done,
-                                color: Colors.white,
-                                size: 15,
-                              )
-                            : Icon(
-                                Icons.done_all,
-                                color: Colors.lightBlue,
-                                size: 15,
-                              ):Container(),
+                              isSendByMe
+                                  ? isRead
+                                      ? Icon(
+                                          Icons.done,
+                                          color: Colors.white,
+                                          size: 15,
+                                        )
+                                      : Icon(
+                                          Icons.done_all,
+                                          color: Colors.lightBlue,
+                                          size: 15,
+                                        )
+                                  : Container(),
                             ],
                           ),
                         ),
-                          
                       ],
                     ),
                   ),
@@ -1212,26 +1299,25 @@ class ChatMessageList extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
         stream: chatMessageStream,
-        
         builder: (context, snapshot) {
-         update(id) async{
-          try{ await FirebaseFirestore.instance
-            .collection('ChatRoom')
-            .doc(server['phoneNumber'])
-            .collection('ListUsers')
-            .doc((server['uid'] + "_" + selfUid)).collection('Chats').doc(id)
-            .update(
-              {
-                 'isRead' : 'true'
-              }
-            );}catch(e){
+          update(id) async {
+            try {
+              await FirebaseFirestore.instance
+                  .collection('ChatRoom')
+                  .doc(server['phoneNumber'])
+                  .collection('ListUsers')
+                  .doc((server['uid'] + "_" + selfUid))
+                  .collection('Chats')
+                  .doc(id)
+                  .update({'isRead': 'true'});
+            } catch (e) {
               print(e);
             }
-         }
-     
+          }
+
           print('inside ot');
-          // if (snapshot.data.docs.where((element) => 
-          
+          // if (snapshot.data.docs.where((element) =>
+
           // false) .data()["isRead"] == 'false')
           if (snapshot.data == null)
             return Center(child: CustomprogressIndicator());
@@ -1245,7 +1331,11 @@ class ChatMessageList extends StatelessWidget {
               // print('hello in list');
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
-            snapshot.data.docs[index].data()["isRead"]=='false'? update(snapshot.data.docs[index].id,):print('updating');
+                snapshot.data.docs[index].data()["isRead"] == 'false'
+                    ? update(
+                        snapshot.data.docs[index].id,
+                      )
+                    : print('updating');
                 return TileMessage(
                     snapshot.data.docs[index].id,
                     snapshot.data.docs[index].data()["type"],

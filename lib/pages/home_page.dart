@@ -21,7 +21,6 @@ import 'package:theproject/pages/profilepage.dart';
 // import 'package:theproject/repos/candidate.dart';
 import 'package:theproject/stores/login_store.dart';
 import 'package:theproject/theme.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:theproject/widgets/cachedImage.dart';
 import 'package:theproject/widgets/cirindi.dart';
 import 'package:theproject/widgets/heroImage.dart';
@@ -46,7 +45,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   LoginStore loginStore = LoginStore();
   List users = [];
   FirebaseFirestore firestoreInstance = FirebaseFirestore.instance;
-  UserStatusProvider userProvider;
+  UserProvider userProvider;
   // listalluser() async {
   //   firestoreInstance
   //       .collection("users")
@@ -64,13 +63,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void initState() {
-
-  
 // FirebaseMessaging.instance.getToken().then((token){
 //   print("token $token");
-// }); 
+// });
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      userProvider = Provider.of<UserStatusProvider>(context, listen: false);
+      userProvider = Provider.of<UserProvider>(context, listen: false);
       await userProvider.refreshUser();
 
       DatabaseMethods().setUserState(
@@ -108,8 +105,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       phonenumber.addAll(element.phones
           .map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
     });
-    setState(() {
-    });
+    setState(() {});
   }
 
   values(QuerySnapshot querySnapshot) async {
@@ -192,8 +188,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         stream: chatroomstream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           return snapshot.hasData && snapshot.data.docs.isNotEmpty
-              ?  FutureBuilder(
-                
+              ? FutureBuilder(
                   future: values(snapshot.data),
                   builder: (context, snap) {
                     return snap.hasData
@@ -286,6 +281,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 style: TextStyle(color: Colors.white),
               ),
               backgroundColor: Color(0xff028090),
+              //  Color(0xff028090),
               actions: [
                 Container(
                     padding: EdgeInsets.symmetric(horizontal: 2),
@@ -294,13 +290,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         Icons.logout,
                         color: Colors.white,
                       ),
-                      onPressed: () {
-                         DatabaseMethods().setUserState(
-        userState: UserState.Offline,
-      );
+                      onPressed: () async {
+                        await DatabaseMethods().setUserState(
+                          userState: UserState.Offline,
+                        );
                         loginStore.signOut(context);
-
-                      
 
                         print("about to logout");
                       },
@@ -394,10 +388,9 @@ class Chatroomtile extends StatelessWidget {
   var image;
 
   Chatroomtile({this.userName, this.server, this.contact, this.image});
-  
+
   @override
   Widget build(BuildContext context) {
-  
     final now = new DateTime.now();
     var todaysdate = DateFormat.yMMMd().format(now);
     print(todaysdate);
@@ -431,14 +424,14 @@ class Chatroomtile extends StatelessWidget {
                           width: 50,
                           child: (image != null)
                               ? CachedNetworkImage(
-                                imageUrl: image ?? "",
-                                progressIndicatorBuilder: (context, url,
-                                        downloadProgress) =>
-                                    CircularProgressIndicator(
-                                        value: downloadProgress.progress),
-                                errorWidget: (context, url, error) =>
-                                    Icon(Icons.error),
-                              )
+                                  imageUrl: image ?? "",
+                                  progressIndicatorBuilder:
+                                      (context, url, downloadProgress) =>
+                                          CircularProgressIndicator(
+                                              value: downloadProgress.progress),
+                                  errorWidget: (context, url, error) =>
+                                      Icon(Icons.error),
+                                )
                               : Image.asset('assets/img/pp.png')),
                     ),
                   ),
@@ -481,7 +474,6 @@ class Chatroomtile extends StatelessWidget {
             )
           ],
         ),
-
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 10.0),
           child: SizedBox(

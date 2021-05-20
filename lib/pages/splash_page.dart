@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:theproject/firebasestorage/databsemethods.dart';
 import 'package:theproject/pages/home_page.dart';
 import 'package:theproject/pages/login_page.dart';
 // import 'package:theproject/repos/candidate.dart';
@@ -15,11 +16,14 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+var chatroomstream;
+  
   @override
   void initState() {
     super.initState();
+      
 
-    Future.delayed(Duration(seconds: 1), () {
+    Future.delayed(Duration(seconds: 2), () {
       Provider.of<LoginStore>(context, listen: false)
           .isAlreadyAuthenticated()
           .then((result) {
@@ -49,17 +53,30 @@ class _SplashPageState extends State<SplashPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Center(
-              child: Container(
-                  height: 100,
-                  // width: 500,
-                  child: Center(
-                      child: Text("TheSupChat",
-                          style:TextStyle(
-                                  color: MyColors.maincolor,
-                                  letterSpacing: 3,
-                                  fontSize: 30,fontFamily: 'Rightss',
-                                  fontWeight: FontWeight.bold)
-                          )))
+              child: Shimmer.fromColors(
+                baseColor:   MyColors.maincolor,
+                highlightColor: Colors.white,
+                child: Text(
+                  'TheSupChat',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 30.0,
+                    fontWeight:
+                    FontWeight.bold,
+                  ),
+                ),
+              ),
+              // child: Container(
+              //     height: 100,
+              //     // width: 500,
+              //     child: Center(
+              //         child: Text("TheSupChat",
+              //             style:TextStyle(
+              //                     color: MyColors.maincolor,
+              //                     letterSpacing: 3,
+              //                     fontSize: 30,fontFamily: 'Rightss',
+              //                     fontWeight: FontWeight.bold)
+              //             )))
 
             ),
           ],

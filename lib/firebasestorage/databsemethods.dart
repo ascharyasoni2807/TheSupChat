@@ -83,10 +83,8 @@ class DatabaseMethods {
     if (serverPhone.contains("+")) {
       print("yesss");
       serverPhone = serverPhone.substring(serverPhone.length - 10);
-      print(serverPhone);
     } else {
       serverPhone = serverPhone;
-      print(serverPhone);
     }
 
     final snapShot = await FirebaseFirestore.instance
@@ -186,7 +184,7 @@ class DatabaseMethods {
     }
   }
 
-  addConvMessage(
+ Future<void> addConvMessage(
     otherphone,
     messageMap,
     serveruid,
@@ -274,6 +272,7 @@ class DatabaseMethods {
   }
 
   int perPage = 30;
+ 
   getConvoMessage(serveruid,contact) async {
     var user = _auth.currentUser;
     var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
@@ -303,7 +302,7 @@ class DatabaseMethods {
         .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
         .collection("Chats")
         .orderBy("time", descending: true)
-        .limit(25)
+        // .limit(25)
         .snapshots();
   }
 
@@ -322,19 +321,17 @@ class DatabaseMethods {
         .snapshots();
   }
 
-  Future getPhotoUrlofanyUser(uid) async {
+  getPhotoUrlofanyUser(uid) async {
     var url;
     var data =
         await FirebaseFirestore.instance.doc("users/$uid").get().then((value) {
-      print(value['profilePicture']);
-      print("skajbdfjasfsajbsjcbsajcj");
       return value['profilePicture'];
     });
 
     return data.toString();
   }
 
-  deleteConvo(id, otherphone, serveruid) {
+ Future<void> deleteConvo(id, otherphone, serveruid) {
     var user = _auth.currentUser;
     var phoneNumber =
         CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
@@ -419,7 +416,7 @@ class DatabaseMethods {
       });
   }
 
-  Future deleteSingleConvo(id, otherphone, serveruid) {
+  Future<void> deleteSingleConvo(id, otherphone, serveruid) {
     var user = _auth.currentUser;
     var phoneNumber =
         CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
