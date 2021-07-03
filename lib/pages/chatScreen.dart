@@ -24,12 +24,14 @@ import 'package:theproject/providers/imageuploadprovider.dart';
 import 'package:theproject/repos/customfunctions.dart';
 import 'package:theproject/repos/storage_repo.dart';
 import 'package:theproject/theme.dart';
+import 'package:theproject/utilities.dart/utility.dart';
 // import 'package:theproject/utils/call_utilities.dart';
 import 'package:theproject/widgets/cachedImage.dart';
 import 'package:theproject/widgets/cirindi.dart';
 import 'package:theproject/pages/previewImage.dart';
 import 'package:theproject/widgets/alertdialog.dart';
 import 'package:theproject/widgets/onlinestatus.dart';
+import 'package:theproject/widgets/toast.dart';
 
 import '../firebasestorage/databsemethods.dart';
 import '../theme.dart';
@@ -88,11 +90,8 @@ class _ChatScreenState extends State<ChatScreen> {
     print(pickedFile.path);
     print(filename);
     Navigator.pop(context);
-    String url = await StorageRepo().uploadChatPic(
-      files,
-      otherUid,
-      filename,
-    );
+    String url = await StorageRepo()
+        .uploadChatPic(files, otherUid, filename, _imageUploadProvider);
 
     sendImage(url, filetype, filename, sizes);
   }
@@ -100,9 +99,18 @@ class _ChatScreenState extends State<ChatScreen> {
   showAttachmentBottomSheet(context) {
     showModalBottomSheet(
         context: context,
-        elevation: 0,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(10.0),
+                topRight: const Radius.circular(10.0))),
         builder: (BuildContext bc) {
           return Container(
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: new BorderRadius.only(
+                    topLeft: const Radius.circular(10.0),
+                    topRight: const Radius.circular(10.0))),
             child: Wrap(
               children: <Widget>[
                 ListTile(
@@ -178,7 +186,11 @@ class _ChatScreenState extends State<ChatScreen> {
       imagedetailMap = {
         "imageUrl": element['url'],
         "sendBy": selfUid,
-        "isRead": 'false',
+        "isReadBy" + otherUid: 'false',
+        "isReadBy" + selfUid: 'false',
+
+        'flag' + selfUid: 'false',
+        'flag' + otherUid: 'false',
         "message": element['file'].name,
         // "lastmessage": basenames.toString(),
         "time": DateTime.now().millisecondsSinceEpoch,
@@ -196,12 +208,15 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   sendImage(url, fileType, basenames, sizes) async {
-    settingRoom();
-
+    settingRoom(basenames);
     Map<String, dynamic> imagedetailMap = {
       "imageUrl": url.toString(),
       "sendBy": selfUid,
       "message": basenames.toString(),
+      "isReadBy" + otherUid: 'false',
+      "isReadBy" + selfUid: 'false',
+      'flag' + selfUid: 'false',
+      'flag' + otherUid: 'false',
       // "lastmessage": basenames.toString(),
       "time": DateTime.now().millisecondsSinceEpoch,
       "type": fileType.toString(),
@@ -221,27 +236,21 @@ class _ChatScreenState extends State<ChatScreen> {
         CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber);
     await FirebaseFirestore.instance
         .collection('ChatRoom')
-        .doc(selfphoneNumber)
-        .collection('ListUsers')
-        .doc((_auth.currentUser.uid + "_" + server["uid"]).toString())
-        .update(
-            {'time': DateTime.now().millisecondsSinceEpoch, 'lastMessage': a});
-    await FirebaseFirestore.instance
-        .collection('ChatRoom')
-        .doc(server["phoneNumber"])
-        .collection('ListUsers')
-        .doc(server["uid"] + "_" + _auth.currentUser.uid)
+        .doc(stringsUid)
         .update(
             {'time': DateTime.now().millisecondsSinceEpoch, 'lastMessage': a});
   }
 
   sendMessage() async {
     if (messagetext.text.isNotEmpty && messagetext.text.trim().isNotEmpty) {
-      settingRoom();
+      settingRoom(messagetext.text);
       Map<String, dynamic> messageMap = {
         "message": messagetext.text.toString().trim(),
         "sendBy": selfUid,
-        'isRead': 'false',
+        "isReadBy" + otherUid: 'false',
+        "isReadBy" + selfUid: 'false',
+        'flag' + selfUid: 'false',
+        'flag' + otherUid: 'false',
         "time": DateTime.now().millisecondsSinceEpoch,
         "type": "text"
       };
@@ -285,6 +294,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ? setWritingTo(true)
             : setWritingTo(false);
       },
+
       // onTap: () {
 
       // },
@@ -328,7 +338,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool isLoading = true;
-  settingRoom() async {
+  settingRoom(lastmessage) async {
     var currentUid = await StorageRepo().getCurrentUidofUser();
     var a;
     var b;
@@ -339,9 +349,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       await FirebaseFirestore.instance
           .collection("ChatRoom")
-          .doc(CustomFunctions().shortPhoneNumber(currentUid.phoneNumber))
-          .collection("ListUsers")
-          .doc((currentUid.uid + '_' + server["uid"]))
+          .doc(stringsUid)
           .collection("Chats")
           .orderBy("time", descending: true)
           .limit(1)
@@ -352,34 +360,13 @@ class _ChatScreenState extends State<ChatScreen> {
         time1 = a['time'];
 
         a = a['message'];
-
-        await FirebaseFirestore.instance
-            .collection("ChatRoom")
-            .doc(server['phoneNumber'])
-            .collection("ListUsers")
-            .doc((server['uid'] + "_" + currentUid.uid))
-            .collection("Chats")
-            .orderBy("time", descending: true)
-            .limit(1)
-            .get()
-            .then((value) async {
-          b = value.docs.first.data();
-          print(b);
-          time2 = b['time'];
-          b = b['message'];
-        });
+        b = a['message'];
       });
-// print(a+b);
     } catch (e) {
       print(e);
     }
-
     List<String> users = [server["uid"], currentUid.uid];
-
-    List<String> phones = [
-      server["phoneNumberWithCountry"],
-      currentUid.phoneNumber
-    ];
+    List<String> phones = [server["phoneNumber"], currentUid.phoneNumber];
     users.sort();
     phones.sort();
     print(users);
@@ -387,48 +374,49 @@ class _ChatScreenState extends State<ChatScreen> {
     final selfPhoneNumber =
         CustomFunctions().shortPhoneNumber(currentUid.phoneNumber);
     final otherPhoneNumber =
-        CustomFunctions().shortPhoneNumber(server['phoneNumberWithCountry']);
+        CustomFunctions().shortPhoneNumber(server['phoneNumberWithoutCountry']);
     final phonesWithoutCountry = [selfPhoneNumber, otherPhoneNumber];
     phonesWithoutCountry.sort();
     print(phonesWithoutCountry);
     print(phones);
     print(users);
-    Map<String, dynamic> selfchatRoomMap = {
-      "users": users,
-      "phoneNumberWithCountry": server["phoneNumberWithCountry"].toString(),
-      "phoneNumber": server["phoneNumber"].toString(),
-      "uid": server["uid"],
-      "time": time1 != null ? time1 : DateTime.now().millisecondsSinceEpoch,
-      "lastMessage": a != null ? a : '',
-      "profilePicture": server["profilePicture"].toString(),
-    };
-    print(users.reversed.toList());
-    Map<String, dynamic> secondchatRoomMap = {
-      "users": users.reversed.toList(),
-      "phoneNumberWithCountry": currentUid.phoneNumber,
-      "phoneNumber": selfPhoneNumber,
-      "uid": currentUid.uid,
-      "time": time2 != null ? time2 : DateTime.now().millisecondsSinceEpoch,
-      "lastMessage": b != null ? b : '',
-      "profilePicture": currentUid.photoURL
-    };
+    // Map<String, dynamic> selfchatRoomMap = {
+    //   "users": users,
+    //   "phoneNumberWithCountry": server["phoneNumberWithCountry"].toString(),
+    //   "phoneNumber": server["phoneNumber"].toString(),
+    //   "uid": server["uid"],
+    //   "time": time1 != null ? time1 : DateTime.now().millisecondsSinceEpoch,
+    //   "lastMessage": a != null ? a : lastmessage,
+    //   "profilePicture": server["profilePicture"].toString(),
+    // };
+    // print(users.reversed.toList());
+    // Map<String, dynamic> secondchatRoomMap = {
+    //   "users": users.reversed.toList(),
+    //   "phoneNumberWithCountry": currentUid.phoneNumber,
+    //   "phoneNumber": selfPhoneNumber,
+    //   "uid": currentUid.uid,
+    //   "time": time2 != null ? time2 : DateTime.now().millisecondsSinceEpoch,
+    //   "lastMessage": b != null ? b : lastmessage,
+    //   "profilePicture": currentUid.photoURL
+    // };
 
     Map<String, dynamic> primaryMap = {
       "users": users,
-      "phoneNumberWithCountry": phonesWithoutCountry,
+      "phoneNumberWithoutCountry": phonesWithoutCountry,
       "phoneNumber": phones,
       "uid": currentUid.uid,
       "time": time2 != null ? time2 : DateTime.now().millisecondsSinceEpoch,
-      "lastMessage": b != null ? b : '',
+      "lastMessage": b != null ? b : lastmessage,
       "profilePicture": currentUid.photoURL
     };
 
     DatabaseMethods()
         .createChatRoom(
             server["uid"],
-            server["phoneNumberWithCountry"].toString(),
-            selfchatRoomMap,
-            secondchatRoomMap)
+            server["phoneNumberWithoutCountry"].toString(),
+            // selfchatRoomMap,
+            // secondchatRoomMap,
+            primaryMap)
         .then((value) {});
   }
 
@@ -464,6 +452,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Map sender = Map();
   Map receiver = Map();
+
   setDataCall() async {
     var profilePhoto =
         await DatabaseMethods().getPhotoUrlofanyUser(_auth.currentUser.uid);
@@ -488,8 +477,6 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     // TODO: implement initState
 
-    //  focusNode.addListener(onFocusChange);
-    //   listScrollController.addListener(_scrollListener);
     server = widget.server;
     contact = widget.contact;
     otherUid = server["uid"];
@@ -531,12 +518,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
     _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
-// WillPopScope(
-//       onWillPop: (){
-//         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomePage()), (Route<dynamic> route) => false);
-
-//       },
-//
 
     return Scaffold(
       appBar: AppBar(
@@ -582,7 +563,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: InkWell(
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                           context,
                           CupertinoPageRoute(
                               builder: (context) => OtherProfileView(
@@ -599,9 +580,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             contact != null
                                 ? contact.runtimeType != String
                                     ? contact?.displayName ??
-                                        server['phoneNumberWithCountry']
-                                    : server['phoneNumberWithCountry']
-                                : server['phoneNumberWithCountry'],
+                                        server['phoneNumberWithoutCountry']
+                                    : server['phoneNumberWithoutCountry']
+                                : server['phoneNumberWithoutCountry'],
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -616,10 +597,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                 padding: const EdgeInsets.all(2.0),
                                 child: OnlineStatus(server: server),
                               )),
-                          // Text(
-                          //   "Status",
-                          //   style: TextStyle(color: Colors.white, fontSize: 10),
-                          // ),
                         ],
                       ),
                     ),
@@ -635,12 +612,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       ),
-      // : AppBar(
-      //     title: Text('1'),
-      //     leading: Icon(Icons.close),
-      //     actions: <Widget>[Icon(Icons.delete), Icon(Icons.more_vert)],
-      //     backgroundColor: Color(0xff028090),
-      //   ),
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
@@ -653,13 +624,6 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               // flex: 4,
               child: Container(
-                //        decoration: BoxDecoration(
-                // image: DecorationImage(
-                //   image: AssetImage(
-                //       'assets/img/wall3.png'),
-                //   fit: BoxFit.fill,
-                // ),),
-                // color: Color(0xff028090).withOpacity(0.18),
                 child: Stack(
                   children: <Widget>[
                     Image.asset(
@@ -675,9 +639,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ? Container(
                     alignment: Alignment.bottomRight,
                     margin: EdgeInsets.only(right: 15),
-                    child: CustomprogressIndicator()
-                    //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
-                    )
+                    child: CustomprogressIndicator())
                 : Container(),
             _imageDownloadProvider.getViewState == ViewState.Loading
                 ? SizedBox(
@@ -696,37 +658,31 @@ class _ChatScreenState extends State<ChatScreen> {
                             minHeight: 2,
                             backgroundColor: MyColors.maincolor,
                             valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white))
-                        // CustomprogressIndicator()
-                        //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
-                        ),
+                                AlwaysStoppedAnimation<Color>(Colors.white))),
                   )
                 : Container(),
-
-            // ignore: prefer_const_constructors
             Row(
               children: [
                 Expanded(
-                  // flex: 10,
                   child: Container(
-                    width: MediaQuery.of(context).size.width * 0.99,
+                    width: MediaQuery.of(context).size.width * 0.98,
                     decoration: BoxDecoration(
                       color: const Color(0xff536162),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     margin:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 5,
+                            flex: 1,
                             child: Column(
                               children: [
                                 ConstrainedBox(
                                     constraints: const BoxConstraints(
-                                        maxHeight: 150.0, maxWidth: 300),
+                                        maxHeight: 150.0, maxWidth: 400),
                                     child: textInput()),
                               ],
                             ),
@@ -755,36 +711,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     },
                   ),
                 )
-                // :Container(
-                //   decoration: BoxDecoration(
-                //      shape: BoxShape.circle,
-                //     gradient: LinearGradient(
-                //     colors: [
-                //             Color(0xff114b5f),
-                //             Color(0xff114b5f)
-                //           ],
-                //   ),),
-                //   margin: EdgeInsets.only(right:10),
-                //   child: IconButton(
-                //     padding: EdgeInsets.zero,
-                //     icon: Icon(
-                //       Icons.mic,
-                //     ),
-                //     color: Colors.white,
-
-                //     onPressed: () {
-                //       // sendMessage();
-                //     },
-                //   ),
-                // ),
-
-                //  IconButton(
-                //      icon: Icon(
-                //        Icons.send,
-                //        size: 20,
-                //      ),
-                //      onPressed: () => sendMessage(),
-                //    )
               ],
             ),
 
@@ -804,17 +730,16 @@ class TileMessage extends StatelessWidget {
   final imageUrl;
   final size;
   final id;
+  final isdeleteforMe;
   final bool isRead;
-  TileMessage(this.id, this.type, this.size, this.message, this.isRead,
-      this.isSendByMe, this.timing, this.imageUrl);
+  TileMessage(this.id, this.isdeleteforMe, this.type, this.size, this.message,
+      this.isRead, this.isSendByMe, this.timing, this.imageUrl);
 
   bool isDownloading = false;
 
   downloadImage(imgUrl, _imageDownloadProvider) async {
     isDownloading = true;
-    var now = new DateTime.now();
-    var formatter = new DateFormat('yyyy-MM-dd');
-    String formattedDate = formatter.format(now);
+    String formattedDate = Utils().dateGiver();
     print(formattedDate);
     _imageDownloadProvider.setToLoading();
     bool downloaded =
@@ -824,20 +749,10 @@ class TileMessage extends StatelessWidget {
     _imageDownloadProvider.setToIdle();
     if (downloaded) {
       print("File Downloaded");
-
-      return Fluttertoast.showToast(
-          msg: "File downloaded in TheSupChat folder",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 2);
+      return Toaster().toaster("File downloaded in TheSupChat folder");
     } else {
       isDownloading = false;
-      return Fluttertoast.showToast(
-          msg: "Problem Downloading File",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          backgroundColor: MyColors.maincolor,
-          timeInSecForIosWeb: 2);
+      return Toaster().toaster("Problem Downloading File");
     }
   }
 
@@ -847,23 +762,9 @@ class TileMessage extends StatelessWidget {
         builder: (BuildContext context) {
           return Dialog(
             backgroundColor: MyColors.maincolor,
-            //this right here
             child: Container(
-              // color: Color(0xff114b5f),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: isSendByMe
-                        ? [
-                            Color(0xff114b5f),
-                            Color(0xff028090),
-                            Color(0xff114b5f)
-                          ]
-                        // [MyColors.maincolor, MyColors.buttoncolor]
-                        : [
-                            Color(0xff114b5f),
-                            Color(0xff028090),
-                            Color(0xff114b5f),
-                          ]),
+                color: MyColors.maincolor,
               ),
               width: MediaQuery.of(context).size.width * 0.9,
               height: 100,
@@ -905,7 +806,7 @@ class TileMessage extends StatelessWidget {
                           ],
                         )
                       : FlatButton(
-                          height: 20,
+                          height: 40,
                           onPressed: () {
                             DatabaseMethods().deleteSingleConvo(
                                 id, server['phoneNumber'], otherUid);
@@ -929,15 +830,14 @@ class TileMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = new DateTime.now();
     var todaysdate = DateFormat.yMMMd().format(now);
-
     ImageDownloadProvider _imageDownloadProvider;
     _imageDownloadProvider = Provider.of<ImageDownloadProvider>(context);
     final date = DateTime.fromMillisecondsSinceEpoch(timing);
     final formattedDate = DateFormat.yMMMd().add_jm().format(date);
-    String time = DateFormat.jm().format(date);
+    String time = Utils().messageTimer(timing);
     print(time);
 
-    return type != null && type == "FileType.image"
+    return isdeleteforMe != 'true' && type != null && type == "FileType.image"
         ? InkWell(
             onTap: () {
               Navigator.push(
@@ -1016,7 +916,7 @@ class TileMessage extends StatelessWidget {
               ),
             ),
           )
-        : type != "text" && type != "FileType.image"
+        : isdeleteforMe != 'true' && type != "text" && type != "FileType.image"
             ? InkWell(
                 onLongPress: () {
                   print(type);
@@ -1027,7 +927,7 @@ class TileMessage extends StatelessWidget {
                 child: Container(
                   margin: isSendByMe
                       ? const EdgeInsets.only(left: 110, top: 3)
-                      : const EdgeInsets.only(right: 110, top: 5),
+                      : const EdgeInsets.only(right: 110, top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   width: MediaQuery.of(context).size.width * 0.7,
                   constraints: BoxConstraints(
@@ -1183,116 +1083,123 @@ class TileMessage extends StatelessWidget {
                   ),
                 ),
               )
-            : InkWell(
-                onLongPress: () {
-                  print(type);
-                  print(formattedDate);
-                  print(id);
-                  showDialogBox(context);
-                },
-                child: Container(
-                  margin: isSendByMe
-                      ? const EdgeInsets.only(left: 110, top: 5)
-                      : const EdgeInsets.only(right: 110, top: 5),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  width: MediaQuery.of(context).size.width * 0.7,
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.70,
-                  ),
-                  alignment:
-                      isSendByMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            // color: Colors.black,
-                            blurRadius: 1.0,
-                            // spreadRadius: 0.0,
-                            //   offset: Offset(
-                            //       0,1.0), // shadow direction: bottom right
-                            // )
-                          )
-                        ],
-                        gradient: LinearGradient(
-                            colors: isSendByMe
-                                ? [Color(0xff114b5f), Color(0xff114b5f)]
-                                // [MyColors.maincolor, MyColors.buttoncolor]
-                                : [
-                                    Color(0xff028090),
-                                    Color(0xff114b5f),
-                                  ]),
-                        // [MyColors.primaryColorLight, MyColors.maincolor]),
-                        borderRadius: isSendByMe
-                            ? const BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                topRight: Radius.circular(10),
-                                bottomLeft: Radius.circular(10))
-                            : const BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                topRight: Radius.circular(10),
-                                bottomRight: Radius.circular(10),
-                              )),
-                    // height: 15,
-
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: isSendByMe
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          child: SelectableText(
-                            message,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                letterSpacing: 0,
-                                fontSize: 16),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Padding(
-                          padding: isSendByMe
-                              ? const EdgeInsets.only(right: 1)
-                              : const EdgeInsets.only(left: 1),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(right: 2.0),
-                                child: Text(
-                                    formattedDate.contains(todaysdate)
-                                        ? 'Today  ' + time.toString()
-                                        : formattedDate,
-                                    textAlign: isSendByMe
-                                        ? TextAlign.end
-                                        : TextAlign.left,
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 9)),
-                              ),
-                              isSendByMe
-                                  ? isRead
-                                      ? Icon(
-                                          Icons.done,
-                                          color: Colors.white,
-                                          size: 15,
-                                        )
-                                      : Icon(
-                                          Icons.done_all,
-                                          color: Colors.lightBlue,
-                                          size: 15,
-                                        )
-                                  : Container(),
+            : isdeleteforMe != 'true'
+                ? InkWell(
+                    onLongPress: () {
+                      print(type);
+                      print(formattedDate);
+                      print(id);
+                      showDialogBox(context);
+                    },
+                    child: Container(
+                      margin: isSendByMe
+                          ? const EdgeInsets.only(left: 110, top: 3)
+                          : const EdgeInsets.only(right: 110, top: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      width: MediaQuery.of(context).size.width * 0.7,
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.70,
+                      ),
+                      alignment: isSendByMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                        decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                // color: Colors.black,
+                                blurRadius: 1.0,
+                                // spreadRadius: 0.0,
+                                //   offset: Offset(
+                                //       0,1.0), // shadow direction: bottom right
+                                // )
+                              )
                             ],
-                          ),
+                            gradient: LinearGradient(
+                                colors: isSendByMe
+                                    ? [Color(0xff114b5f), Color(0xff114b5f)]
+                                    // [MyColors.maincolor, MyColors.buttoncolor]
+                                    : [
+                                        Color(0xff028090),
+                                        Color(0xff114b5f),
+                                      ]),
+                            // [MyColors.primaryColorLight, MyColors.maincolor]),
+                            borderRadius: isSendByMe
+                                ? const BorderRadius.only(
+                                    topLeft: Radius.circular(10),
+                                    topRight: Radius.circular(10),
+                                    bottomLeft: Radius.circular(10))
+                                : const BorderRadius.only(
+                                    topLeft: Radius.circular(10),
+                                    topRight: Radius.circular(10),
+                                    bottomRight: Radius.circular(10),
+                                  )),
+                        // height: 15,
+
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: isSendByMe
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              child: SelectableText(
+                                message,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    letterSpacing: 0,
+                                    fontSize: 16),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Padding(
+                              padding: isSendByMe
+                                  ? const EdgeInsets.only(right: 1)
+                                  : const EdgeInsets.only(left: 1),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 2.0),
+                                    child: Text(
+                                        formattedDate.contains(todaysdate)
+                                            ? 'Today  ' + time.toString()
+                                            : formattedDate,
+                                        textAlign: isSendByMe
+                                            ? TextAlign.end
+                                            : TextAlign.left,
+                                        style: const TextStyle(
+                                            color: Colors.white, fontSize: 9)),
+                                  ),
+                                  isSendByMe
+                                      ? isRead
+                                          ? Icon(
+                                              Icons.done,
+                                              color: Colors.white,
+                                              size: 15,
+                                            )
+                                          : Icon(
+                                              Icons.done_all,
+                                              color: Colors.lightBlue,
+                                              size: 15,
+                                            )
+                                      : Container(),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              );
+                  )
+                : Container();
   }
 }
+
+var stringUid = selfUid + "_" + otherUid;
+final stringsUid = DatabaseMethods().stringUidGenrate(stringUid);
 
 class ChatMessageList extends StatelessWidget {
   @override
@@ -1302,14 +1209,13 @@ class ChatMessageList extends StatelessWidget {
         builder: (context, snapshot) {
           update(id) async {
             try {
+              print('isReadBy$selfUid');
               await FirebaseFirestore.instance
                   .collection('ChatRoom')
-                  .doc(server['phoneNumber'])
-                  .collection('ListUsers')
-                  .doc((server['uid'] + "_" + selfUid))
+                  .doc(stringsUid)
                   .collection('Chats')
                   .doc(id)
-                  .update({'isRead': 'true'});
+                  .update({'isReadBy' + selfUid: 'true'});
             } catch (e) {
               print(e);
             }
@@ -1331,17 +1237,19 @@ class ChatMessageList extends StatelessWidget {
               // print('hello in list');
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
-                snapshot.data.docs[index].data()["isRead"] == 'false'
+                snapshot.data.docs[index].data()["isReadBy$selfUid"] == 'false'
                     ? update(
                         snapshot.data.docs[index].id,
                       )
                     : print('updating');
                 return TileMessage(
                     snapshot.data.docs[index].id,
+                    snapshot.data.docs[index].data()["flag$selfUid"],
                     snapshot.data.docs[index].data()["type"],
                     snapshot.data.docs[index].data()["size"],
                     snapshot.data.docs[index].data()["message"],
-                    snapshot.data.docs[index].data()["isRead"] == 'false',
+                    snapshot.data.docs[index].data()["isReadBy$otherUid"] ==
+                        'false',
                     snapshot.data.docs[index].data()["sendBy"] == selfUid,
                     (snapshot.data.docs[index].data()["time"]),
                     snapshot.data.docs[index].data()["imageUrl"]);

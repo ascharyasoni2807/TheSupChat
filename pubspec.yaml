@@ -26,6 +26,7 @@ dependencies:
   cached_network_image: ^3.0.0
   cloud_firestore: ^1.0.1
   contacts_service: ^0.4.6
+  crop_image: ^1.0.1
   cupertino_icons: ^1.0.2
   dio: ^4.0.0
   downloads_path_provider: ^0.1.0

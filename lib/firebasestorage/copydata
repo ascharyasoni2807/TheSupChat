@@ -74,18 +74,8 @@ class DatabaseMethods {
     });
   }
 
-  String stringUidGenrate(stringUid) {
-    List stringUids = stringUid.split("_");
-    stringUids.sort();
-    stringUid = stringUids.join('_');
-    return stringUid;
-  }
-
-  Future<void> createChatRoom(
-      serveruid,
-      serverPhone,
-      //  selfchatRoomMap, secondchatRoomMap,
-      primaryMap) async {
+  Future<void> createChatRoom(serveruid, serverPhone, selfchatRoomMap,
+      secondchatRoomMap, primaryMap) async {
     var user = _auth.currentUser;
     var phoneNumber =
         CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
@@ -97,7 +87,9 @@ class DatabaseMethods {
       serverPhone = serverPhone;
     }
     var stringUid = _auth.currentUser.uid + "_" + serveruid;
-    stringUid = stringUidGenrate(stringUid);
+    List stringUids = stringUid.split("_");
+    stringUids.sort();
+    stringUid = stringUids.join('_');
 
     final snapShot = await FirebaseFirestore.instance
         .collection('ChatRoom')
@@ -221,50 +213,38 @@ class DatabaseMethods {
 
     print("ppppppppppppppppppppppppppppppp" + phoneNumber);
 
-    var stringUid = _auth.currentUser.uid + "_" + serveruid;
-    stringUid = stringUidGenrate(stringUid);
-
     FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(stringUid)
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + "_" + serveruid))
         .collection("Chats")
         .add(messageMap)
         .catchError((e) {
       print(e.toString());
+    }).then((value) async {
+      print(value.id);
+      print(otherphone);
+      if (otherphone.contains("+")) {
+        print("yesss");
+        otherphone = otherphone.substring(otherphone.length - 10);
+        print(otherphone);
+      } else {
+        otherphone = otherphone;
+        print(otherphone);
+      }
+      await FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(otherphone)
+          .collection("ListUsers")
+          .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
+          .collection("Chats")
+          .doc(value.id)
+          .set(messageMap)
+          .catchError((onError) {
+        print(onError);
+      });
     });
-
-    // FirebaseFirestore.instance
-    //     .collection("ChatRoom")
-    //     .doc(phoneNumber)
-    //     .collection("ListUsers")
-    //     .doc((_auth.currentUser.uid.toString() + "_" + serveruid))
-    //     .collection("Chats")
-    //     .add(messageMap)
-    //     .catchError((e) {
-    //   print(e.toString());
-    // }).then((value) async {
-    //   print(value.id);
-    //   print(otherphone);
-    //   if (otherphone.contains("+")) {
-    //     print("yesss");
-    //     otherphone = otherphone.substring(otherphone.length - 10);
-    //     print(otherphone);
-    //   } else {
-    //     otherphone = otherphone;
-    //     print(otherphone);
-    //   }
-    //   await FirebaseFirestore.instance
-    //       .collection("ChatRoom")
-    //       .doc(otherphone)
-    //       .collection("ListUsers")
-    //       .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
-    //       .collection("Chats")
-    //       .doc(value.id)
-    //       .set(messageMap)
-    //       .catchError((onError) {
-    //     print(onError);
-    //   });
-    // });
   }
 
   addImageConvMessage(
@@ -276,16 +256,35 @@ class DatabaseMethods {
     print(_auth.currentUser.phoneNumber);
     var user = _auth.currentUser;
     var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
-    var stringUid = _auth.currentUser.uid + "_" + serveruid;
-    stringUid = stringUidGenrate(stringUid);
     FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(stringUid)
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
         .collection("Chats")
         .add(messageMap)
         .catchError((e) {
       print(e.toString());
+    }).then((value) {
+      if (otherPhone.contains("+")) {
+        print("yesss");
+        otherPhone = CustomFunctions().shortPhoneNumber(otherPhone);
+        print(otherPhone);
+      } else {
+        otherPhone = otherPhone;
+        print(otherPhone);
+      }
+
+      FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(otherPhone)
+          .collection("ListUsers")
+          .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
+          .collection("Chats")
+          .doc(value.id)
+          .set(messageMap);
     });
+
     return 'completed';
   }
 
@@ -294,40 +293,41 @@ class DatabaseMethods {
   getConvoMessage(serveruid, contact) async {
     var user = _auth.currentUser;
     var phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
+    var b = await FirebaseFirestore.instance
+        .collection('ChatRoom')
+        .doc(contact)
+        .collection('ListUsers')
+        .doc(serveruid + "_" + _auth.currentUser.uid)
+        .collection('Chats')
+        .orderBy('time')
+        .where('isRead', isEqualTo: 'false')
+        .get();
+    b.docs.forEach((document) {
+      print(document.id);
+      FirebaseFirestore.instance
+          .collection('ChatRoom')
+          .doc(contact)
+          .collection('ListUsers')
+          .doc((serveruid + "_" + _auth.currentUser.uid))
+          .collection('Chats')
+          .doc(document.id)
+          .update({'isRead': 'true'});
+    });
 
-    // var b = await FirebaseFirestore.instance
-    //     .collection('ChatRoom')
-    //     .doc(contact)
-    //     .collection('ListUsers')
-    //     .doc(serveruid + "_" + _auth.currentUser.uid)
-    //     .collection('Chats')
-    //     .orderBy('time')
-    //     .where('isRead', isEqualTo: 'false')
-    //     .get();
-    // b.docs.forEach((document) {
-    //   print(document.id);
-    //   FirebaseFirestore.instance
-    //       .collection('ChatRoom')
-    //       .doc(contact)
-    //       .collection('ListUsers')
-    //       .doc((serveruid + "_" + _auth.currentUser.uid))
-    //       .collection('Chats')
-    //       .doc(document.id)
-    //       .update({'isRead': 'true'});
-    // });
-    var stringUid = _auth.currentUser.uid + "_" + serveruid;
-    stringUid = stringUidGenrate(stringUid);
-
-    return FirebaseFirestore.instance
+    return await FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(stringUid)
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
         .collection("Chats")
         .orderBy("time", descending: true)
+        // .limit(25)
         .snapshots();
   }
 
   getFcmToken() async {
     var tok = await FirebaseMessaging.instance.getToken();
+
     return tok;
   }
 
@@ -354,25 +354,45 @@ class DatabaseMethods {
     var user = _auth.currentUser;
     var phoneNumber =
         CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
-    var stringUid = _auth.currentUser.uid + "_" + serveruid;
-    stringUid = stringUidGenrate(stringUid);
 
     FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(stringUid)
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + "_" + serveruid))
         .collection("Chats")
         .doc(id)
-        .delete();
-    //     .update({
-    //   'flag' + serveruid: 'true',
-    //   'flag' + selfUid: 'true'
-    // }).catchError((e) {
-    //   print(e.toString());
-    // });
+        .delete()
+        .catchError((e) {
+      print(e.toString());
+    }).then((value) async {
+      print(otherphone);
+      if (otherphone.contains("+")) {
+        print("yesss");
+        otherphone = otherphone.substring(otherphone.length - 10);
+        print(otherphone);
+      } else {
+        otherphone = otherphone;
+        print(otherphone);
+      }
+      await FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(otherphone)
+          .collection("ListUsers")
+          .doc((serveruid + "_" + _auth.currentUser.uid.toString()))
+          .collection("Chats")
+          .doc(id)
+          .delete()
+          .catchError((onError) {
+        print(onError);
+      });
+    });
 
     FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(stringUid)
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
         .collection("Chats")
         .orderBy("time", descending: true)
         .limit(1)
@@ -383,7 +403,30 @@ class DatabaseMethods {
 
       FirebaseFirestore.instance
           .collection('ChatRoom')
-          .doc(stringUid)
+          .doc(phoneNumber)
+          .collection('ListUsers')
+          .doc((_auth.currentUser.uid + "_" + serveruid))
+          .update({'lastMessage': a['message'], 'time': a['time']});
+    });
+
+    FirebaseFirestore.instance
+        .collection("ChatRoom")
+        .doc(otherphone)
+        .collection("ListUsers")
+        .doc((serveruid + "_" + _auth.currentUser.uid))
+        .collection("Chats")
+        .orderBy("time", descending: true)
+        .limit(1)
+        .get()
+        .then((value) async {
+      var a = value.docs.first.data();
+      print(a['message']);
+
+      FirebaseFirestore.instance
+          .collection('ChatRoom')
+          .doc(otherphone)
+          .collection('ListUsers')
+          .doc(serveruid + "_" + _auth.currentUser.uid)
           .update({'lastMessage': a['message'], 'time': a['time']});
     });
   }
@@ -392,15 +435,38 @@ class DatabaseMethods {
     var user = _auth.currentUser;
     var phoneNumber =
         CustomFunctions().shortPhoneNumber(user.phoneNumber.toString());
-    var stringUid = _auth.currentUser.uid + "_" + serveruid;
-    stringUid = stringUidGenrate(stringUid);
+
     FirebaseFirestore.instance
         .collection("ChatRoom")
-        .doc(stringUid)
+        .doc(phoneNumber)
+        .collection("ListUsers")
+        .doc((_auth.currentUser.uid.toString() + "_" + serveruid))
         .collection("Chats")
         .doc(id)
-        .update({'flag' + selfUid: 'true'}).catchError((e) {
+        .delete()
+        .catchError((e) {
       print(e.toString());
+    }).then((value) async {
+      await FirebaseFirestore.instance
+          .collection("ChatRoom")
+          .doc(phoneNumber)
+          .collection("ListUsers")
+          .doc((_auth.currentUser.uid.toString() + '_' + serveruid))
+          .collection("Chats")
+          .orderBy("time", descending: true)
+          .limit(1)
+          .get()
+          .then((value) async {
+        var a = value.docs.first.data();
+        print(a['message']);
+
+        FirebaseFirestore.instance
+            .collection('ChatRoom')
+            .doc(phoneNumber)
+            .collection('ListUsers')
+            .doc((_auth.currentUser.uid + "_" + serveruid))
+            .update({'lastMessage': a['message'], 'time': a['time']});
+      });
     });
   }
 
@@ -414,24 +480,15 @@ class DatabaseMethods {
       "state": stateNum,
     });
   }
-  // whereField("vitamins", arrayContains: "A")
 
   Stream<QuerySnapshot> getListStream() {
-    print('${_auth.currentUser.phoneNumber}');
     return FirebaseFirestore.instance
         .collection("ChatRoom")
-        .where('phoneNumber', arrayContains: '${_auth.currentUser.phoneNumber}')
+        .doc(CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber))
+        .collection("ListUsers")
         .orderBy("time", descending: true)
         .snapshots();
   }
-
-  //   return FirebaseFirestore.instance
-  //       .collection("ChatRoom")
-  //       .doc(CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber))
-  //       .collection("ListUsers")
-  //       .orderBy("time", descending: true)
-  //       .snapshots();
-  // }
 
   Stream<DocumentSnapshot> getUserStream(uid) {
     return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();

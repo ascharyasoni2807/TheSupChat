@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
+import 'package:theproject/models/self.dart';
 import 'package:vector_math/vector_math.dart' as math;
 import 'package:theproject/enum/userState.dart';
 import 'package:theproject/pages/onboardprofile.dart';
@@ -44,23 +45,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   LoginStore loginStore = LoginStore();
   List users = [];
+  Map hashmap;
+  List foundusers = [];
+  final phonenumber = [];
+  String selfPhone;
   FirebaseFirestore firestoreInstance = FirebaseFirestore.instance;
   UserProvider userProvider;
-  // listalluser() async {
-  //   firestoreInstance
-  //       .collection("users")
-  //       .get()
-  //       .then((QuerySnapshot querySnapshot) {
-  //     querySnapshot.docs.forEach((result) {
-  //       // print(result.data());
-  //       final Map value = result.data();
-  //       users = value.values.toList();
-  //       print(users[1]["phone"]);
-  //     });
-  //   });
-  // }
-  //
-
   @override
   void initState() {
 // FirebaseMessaging.instance.getToken().then((token){
@@ -69,82 +59,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       userProvider = Provider.of<UserProvider>(context, listen: false);
       await userProvider.refreshUser();
-
       DatabaseMethods().setUserState(
         userState: UserState.Online,
       );
     });
-
     WidgetsBinding.instance.addObserver(this);
     chatroomstream = DatabaseMethods().getListStream();
-    getContacts();
-    // setState(() {
-    // });
-    super.initState();
-  }
-
-  Map hashmap;
-  List foundusers = [];
-  final phonenumber = [];
-  String selfPhone;
-  getContacts() async {
-    final Iterable<Contact> contacts = await ContactsService.getContacts(
-      withThumbnails: false,
-    );
-    var user = _auth.currentUser;
-    selfPhone = CustomFunctions().shortPhoneNumber(user.phoneNumber);
-
-    // final contacts =  _contacts.toList();
-    hashmap = Map();
-
-    await contacts.forEach((element) {
-      element.phones.forEach((_element) {
-        hashmap[_element.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")] =
-            element;
-      });
-      phonenumber.addAll(element.phones
-          .map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
+    DatabaseMethods().getListStream().listen((event) {
+      print("event.docs.length========================");
+      print(event.docs.length);
     });
-    setState(() {});
-  }
-
-  values(QuerySnapshot querySnapshot) async {
-    final _foundusers = [];
-    for (int i = 0, len = querySnapshot?.docs?.length; i < len; i++) {
-      final result = querySnapshot?.docs[i];
-      final Map value = result.data();
-
-      bool a = phonenumber.contains(value['phoneNumberWithCountry']);
-      bool b = phonenumber.contains(value['phoneNumber']);
-      var allProfilePic;
-      allProfilePic =
-          await DatabaseMethods().getPhotoUrlofanyUser(value["uid"]);
-
-      if (a || b) {
-        print(value['phoneNumberWithCountry']);
-        print(value['phoneNumber']);
-        print(a);
-        print(b);
-        _foundusers.add({
-          "serverData": value,
-          "profilePicture": allProfilePic,
-          "phoneData": a
-              ? hashmap[value['phoneNumberWithCountry']]
-              : hashmap[value['phoneNumber']]
-        });
-        print(value);
-        print(_foundusers);
-      } else {
-        _foundusers.add({
-          "serverData": value,
-          "profilePicture": allProfilePic,
-        });
-      }
-    }
-    //  setState(() {
-
-    //  });
-    return _foundusers;
+    print(chatroomstream.toList());
+    getContacts();
+    super.initState();
   }
 
   @override
@@ -187,6 +114,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return StreamBuilder<QuerySnapshot>(
         stream: chatroomstream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          // try {
+          //   values(snapshot.data);
+          // } catch (e) {
+          //   print("e==========");
+          //   print(e);
+          // }
           return snapshot.hasData && snapshot.data.docs.isNotEmpty
               ? FutureBuilder(
                   future: values(snapshot.data),
@@ -205,6 +138,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                       final _contact =
                                           snap.data?.elementAt(index);
                                       Contact contact = _contact["phoneData"];
+                                      print(contact.runtimeType.toString());
                                       final serverData = _contact["serverData"];
                                       final imageurl =
                                           _contact["profilePicture"];
@@ -212,12 +146,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                         children: [
                                           Chatroomtile(
                                               userName: contact.runtimeType
-                                                          .toString() !=
-                                                      'String'
+                                                          .toString() ==
+                                                      'Contact'
                                                   ? contact?.displayName ??
                                                       contact?.phones?.first
                                                   : serverData[
-                                                      'phoneNumberWithCountry'],
+                                                      'phoneNumberWithoutCountry'][j],
                                               server: serverData,
                                               contact: contact,
                                               image: imageurl),
@@ -269,23 +203,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-              // toolbarHeight: 50,
-              //           shape: RoundedRectangleBorder(
-              //   borderRadius: BorderRadius.vertical(
-              //     bottom: Radius.circular(10),
-              //   ),
-              // ),
               elevation: 5,
               title: Text(
                 "Chats",
                 style: TextStyle(color: Colors.white),
               ),
               backgroundColor: Color(0xff028090),
-              //  Color(0xff028090),
               actions: [
                 Container(
                     padding: EdgeInsets.symmetric(horizontal: 2),
                     child: IconButton(
+                      tooltip: 'Sign Out',
                       icon: Icon(
                         Icons.logout,
                         color: Colors.white,
@@ -302,6 +230,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 Container(
                     padding: EdgeInsets.symmetric(horizontal: 0),
                     child: IconButton(
+                        tooltip: 'Profile',
                         icon: Icon(
                           Icons.face_retouching_natural,
                           color: Colors.white,
@@ -332,6 +261,79 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       },
     );
   }
+
+  getContacts() async {
+    final Iterable<Contact> contacts = await ContactsService.getContacts(
+      withThumbnails: false,
+    );
+    var user = _auth.currentUser;
+    selfPhone = CustomFunctions().shortPhoneNumber(user.phoneNumber);
+
+    // final contacts =  _contacts.toList();
+    hashmap = Map();
+
+    await contacts.forEach((element) {
+      element.phones.forEach((_element) {
+        hashmap[_element.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")] =
+            element;
+      });
+      phonenumber.addAll(element.phones
+          .map((e) => e.value.replaceAll(new RegExp(r'[\)\(\-\s]+'), "")));
+    });
+    setState(() {});
+  }
+
+  var j;
+  changer(x) {
+    return x == 0 ? 1 : 0;
+  }
+
+  values(QuerySnapshot querySnapshot) async {
+    final _foundusers = [];
+
+    for (int i = 0, len = querySnapshot?.docs?.length; i < len; i++) {
+      final result = querySnapshot?.docs[i];
+      final Map value = result.data();
+      selfPhone =
+          CustomFunctions().shortPhoneNumber(_auth.currentUser.phoneNumber);
+      var l = value["users"].indexOf('${_auth.currentUser.uid}');
+      l = changer(l);
+      var k = value['phoneNumber'].indexOf('${_auth.currentUser.phoneNumber}');
+      k = changer(k);
+      j = value['phoneNumberWithoutCountry'].indexOf('$selfPhone');
+      j = changer(j);
+
+      bool a = phonenumber.contains(value['phoneNumberWithoutCountry'][j]);
+      bool b = phonenumber.contains(value['phoneNumber'][k]);
+      // var allProfilePic =
+      //     await DatabaseMethods().getPhotoUrlofanyUser(value["users"][l]);
+      if (a || b) {
+        print(value['phoneNumberWithoutCountry']);
+        print(value['phoneNumber']);
+        print(a);
+        print(b);
+        _foundusers.add({
+          "serverData": value,
+          // "profilePicture": allProfilePic,
+          "phoneData": a
+              ? hashmap[value['phoneNumberWithoutCountry'][j]]
+              : hashmap[value['phoneNumber'][k]]
+        });
+        print(value);
+        print(_foundusers);
+      } else {
+        _foundusers.add({
+          "serverData": value,
+          // "profilePicture": allProfilePic,
+        });
+        print(value);
+        print(_foundusers);
+      }
+      print(_foundusers);
+    }
+    print(_foundusers);
+    return _foundusers;
+  }
 }
 
 void _openCustomDialog(context, image, userName) {
@@ -339,18 +341,16 @@ void _openCustomDialog(context, image, userName) {
       barrierColor: Colors.black.withOpacity(0.5),
       transitionBuilder: (context, a1, a2, widget) {
         return Transform.rotate(
-          // scale: a1.value,
           angle: math.radians(a1.value * 360),
-          // angle: 45,
           child: Opacity(
               opacity: a1.value,
               child: Material(
                 type: MaterialType.transparency,
                 child: Center(
                   child: Padding(
-                      padding: const EdgeInsets.all(25.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(15.0),
+                      padding: const EdgeInsets.all(40.0),
+                      child: Card(
+                        elevation: 5,
                         child: Stack(
                           children: [
                             CachedNetworkImage(imageUrl: image),

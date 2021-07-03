@@ -36,10 +36,7 @@ class LoaderHUD extends StatelessWidget {
     return Stack(
       children: [
         child,
-        // Opacity(
-        //   child: ModalBarrier(dismissible: dismissible, color: color),
-        //   opacity: opacity,
-        // ),
+
         Center(child: progressIndicator),
       ],
     );

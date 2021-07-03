@@ -15,33 +15,21 @@ class OtherProfileView extends StatefulWidget {
 
 class _OtherProfileViewState extends State<OtherProfileView> {
   var naming;
+  var phone;
   getName() async {
-    DocumentSnapshot name = await FirebaseFirestore.instance
+    DocumentSnapshot profiles = await FirebaseFirestore.instance
         .collection("users")
         .doc(widget.server['uid'])
-        // snapshots();
         .get();
-    // name.data().
-setState(() {
- naming = name.data()['name'];
-});
-    
-
-  //    name.first.then((value) {
-  //    print(value.data());
-  //    Map values = value.data();
-  //    var a = values.values.toList();
-  //    print(a);
-  //    print(a[4]);
-  // naming = a[4];
-   
-  //     }  );
-
+    setState(() {
+      naming = profiles.data()['name'];
+      phone = profiles.data()['phoneNumber'];
+    });
   }
 
   @override
   void initState() {
- getName();
+    getName();
     super.initState();
   }
 
@@ -57,7 +45,7 @@ setState(() {
           children: [
             Expanded(
               flex: 1,
-                          child: Stack(
+              child: Stack(
                 children: [
                   Container(
                     // padding: EdgeInsets.all(8),
@@ -84,14 +72,17 @@ setState(() {
                                     padding: const EdgeInsets.all(8.0),
                                     child: Column(
                                       children: [
-                                        Text(
-                                          widget.server["phoneNumber"],
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                              // fontStyle: FontStyle.italic,
-                                              fontWeight: FontWeight.w500),
-                                        ),
+                                        phone != null
+                                            ? Text(
+                                                phone,
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    // fontStyle: FontStyle.italic,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              )
+                                            : Container(),
                                         Text(
                                           naming != null ? '~ ' + naming : '',
                                           style: TextStyle(

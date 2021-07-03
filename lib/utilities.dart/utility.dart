@@ -1,13 +1,21 @@
-
-
-
+import 'package:intl/intl.dart';
 import 'package:theproject/enum/userState.dart';
 
 class Utils {
+  dateGiver() {
+    var now = new DateTime.now();
+    var formatter = new DateFormat('yyyy-MM-dd');
+    String formattedDate = formatter.format(now);
+    print(formattedDate);
+    return formattedDate;
+  }
 
-
-
-
+  messageTimer(timing) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timing);
+    final formattedDate = DateFormat.yMMMd().add_jm().format(date);
+    String time = DateFormat.jm().format(date);
+    return time;
+  }
 
   static int stateToNum(UserState userState) {
     switch (userState) {
@@ -22,9 +30,8 @@ class Utils {
     }
   }
 
-
- static UserState numToState(int number) {
-     switch (number) {
+  static UserState numToState(int number) {
+    switch (number) {
       case 0:
         return UserState.Offline;
 
@@ -35,5 +42,4 @@ class Utils {
         return UserState.Waiting;
     }
   }
-
 }

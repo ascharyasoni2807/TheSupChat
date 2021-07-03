@@ -103,18 +103,13 @@ class _ProfilePageState extends State<ProfilePage> {
               MaterialPageRoute(
                   builder: (context) => PreviewPage(imageUrl: image)));
         },
-        child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black),
-              color: Colors.black,
-            ),
-            height: 300,
-            width: 300,
-            // color: Colors.black,
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: CachedNetworkImage(imageUrl: image),
-            )),
+        child: Padding(
+          padding: const EdgeInsets.all(30.0),
+          child: Card(
+            elevation: 5,
+            child: CachedNetworkImage(imageUrl: image),
+          ),
+        ),
       ),
     );
   }

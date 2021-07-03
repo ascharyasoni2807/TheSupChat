@@ -14,8 +14,6 @@ class OnlineStatus extends StatelessWidget {
   final server;
  OnlineStatus({this.server});
 
-  
-
   @override
   Widget build(BuildContext context) {
      var a;

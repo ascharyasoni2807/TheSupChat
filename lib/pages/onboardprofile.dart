@@ -21,7 +21,6 @@ import 'package:theproject/pages/home_page.dart';
 import 'package:theproject/repos/storage_repo.dart';
 import 'package:theproject/widgets/cirindi.dart';
 
-
 class OnboardProfilePage extends StatefulWidget {
   final user;
   OnboardProfilePage({this.user});
@@ -36,7 +35,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
   bool isCompleted = false;
   var picker = ImagePicker();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-   ImageUploadProvider _imageUploadProvider;
+  ImageUploadProvider _imageUploadProvider;
   var nameofuser;
   var phoneNumberuser;
   Directory appDocDir;
@@ -59,30 +58,26 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
       });
     });
   }
+
   permission() async {
-
-
     final PermissionStatus permission = await Permission.storage.status;
-    final PermissionStatus permissions = await Permission.storage.request(); 
-   
+    final PermissionStatus permissions = await Permission.storage.request();
+
     if (permission != PermissionStatus.granted &&
         permission != PermissionStatus.denied) {
       final Map<Permission, PermissionStatus> permissionStatus =
           await [Permission.storage].request();
-      return permissionStatus[Permission.storage] ??
-          PermissionStatus.limited;
+      return permissionStatus[Permission.storage] ?? PermissionStatus.limited;
     } else {
       return permission;
     }
-  
-
   }
 
   @override
   void initState() {
     super.initState();
     getPhoto();
-     permission();
+    permission();
     //  Candidate().getContacts();
     mapping(widget.user);
   }
@@ -111,7 +106,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
 
       print('completed');
 
-      await StorageRepo().uploadPic(_image,_imageUploadProvider);
+      await StorageRepo().uploadPic(_image, _imageUploadProvider);
       setState(() {
         _image = croppedImage;
         isCompleted = true;
@@ -172,13 +167,13 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                                             ? (userPhotos != null)
                                                 ? CachedNetworkImage(
                                                     imageUrl: userPhotos,
-                                                    progressIndicatorBuilder:
-                                                        (context, url,
-                                                                downloadProgress) =>
-                                                            CircularProgressIndicator(
-                                                                value:
-                                                                    downloadProgress
-                                                                        .progress),
+                                                    progressIndicatorBuilder: (context,
+                                                            url,
+                                                            downloadProgress) =>
+                                                        CircularProgressIndicator(
+                                                            value:
+                                                                downloadProgress
+                                                                    .progress),
                                                     errorWidget:
                                                         (context, url, error) =>
                                                             Icon(Icons.error),
@@ -188,7 +183,8 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                                                 //  userPhotos,
                                                 //   fit: BoxFit.fill,
                                                 // )
-                                                : Image.asset('assets/img/pp.png')
+                                                : Image.asset(
+                                                    'assets/img/pp.png')
                                             : Image.asset('assets/img/pp.png')),
                                   ),
                                 ),
@@ -197,12 +193,13 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                             GestureDetector(
                               onTap: getImage,
                               child: Padding(
-                                  padding: EdgeInsets.only(top: 110.0, left: 110.0),
+                                  padding:
+                                      EdgeInsets.only(top: 110.0, left: 110.0),
                                   child: new Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: <Widget>[
                                       new CircleAvatar(
-                                        backgroundColor:MyColors.maincolor,
+                                        backgroundColor: MyColors.maincolor,
                                         radius: 20.0,
                                         child: new Icon(
                                           Icons.camera_alt,
@@ -217,9 +214,7 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                       ),
                     ),
                   ]),
-                  SizedBox(
-                    height:20
-                  ),
+                  SizedBox(height: 20),
                   Container(
                     width: MediaQuery.of(context).size.width * 0.75,
                     height: 80,
@@ -238,14 +233,19 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                           ),
                           onTap: () {
                             print("name changinng");
-                            TextEditingController nameofuser = TextEditingController();
-                        
+                            TextEditingController nameofuser =
+                                TextEditingController();
+
                             showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: false,
                                 builder: (context) => SingleChildScrollView(
                                         child: Container(
-                                      child: Container(child: BottomSheetExample(imageUploadProvider:_imageUploadProvider,nameofuser:nameofuser)),
+                                      child: Container(
+                                          child: BottomSheetExample(
+                                              imageUploadProvider:
+                                                  _imageUploadProvider,
+                                              nameofuser: nameofuser)),
                                     )));
                           },
                         ),
@@ -272,69 +272,71 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
                       margin: EdgeInsets.all(10),
                     ),
                   ),
-                   Container(
+                  Container(
                     width: MediaQuery.of(context).size.width * 0.75,
                     height: 60,
                     child: Card(
                       color: MyColors.maincolor,
                       child: ListTile(
-                        leading:   Icon(Icons.phone,color: Colors.white,),
-                        title:   Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Flexible(
-                              child: Text("$phoneNumberuser",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: Colors.white)))
-                        ],
+                        leading: Icon(
+                          Icons.phone,
+                          color: Colors.white,
+                        ),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Flexible(
+                                child: Text("$phoneNumberuser",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        color: Colors.white)))
+                          ],
+                        ),
                       ),
-                      ),
-                       shape: RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                       elevation: 5,
                     ),
-                  
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(
                         child: Text(
-                            "Your profile is end-to-end encrypted.  Your Profile And changes will be visible to your contacts.",style: TextStyle(fontSize: 10,color: Colors.grey[700]),)),
+                      "Your profile is end-to-end encrypted.  Your Profile And changes will be visible to your contacts.",
+                      style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+                    )),
                   )
                 ],
               ),
             ),
-               _imageUploadProvider.getViewState == ViewState.Loading
-              ? Container(
-                
-                  alignment: Alignment.center,
-                  margin: EdgeInsets.only(right: 15),
-                  child: CustomprogressIndicator()
-                  //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
-                  )
-              : Container(),
+            _imageUploadProvider.getViewState == ViewState.Loading
+                ? Container(
+                    alignment: Alignment.center,
+                    margin: EdgeInsets.only(right: 15),
+                    child: CustomprogressIndicator()
+                    //  CircularProgressIndicator(strokeWidth: 2, backgroundColor: MyColors.maincolor, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)
+                    )
+                : Container(),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: MyColors.maincolor,
-        child: Icon(Icons.arrow_forward),
-        elevation: 10,
-        onPressed: () async {
-          print("Hello World");
-          if (nameofuser!=null && nameofuser.toString().isNotEmpty){
-          print(widget.user.phoneNumber);
-          Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => HomePage()),
-              (Route<dynamic> route) => false);
-        }else {
-          print('retry');
-        }
-        }
-      ),
+          backgroundColor: MyColors.maincolor,
+          child: Icon(Icons.arrow_forward),
+          elevation: 10,
+          onPressed: () async {
+            print("Hello World");
+            if (nameofuser != null && nameofuser.toString().isNotEmpty) {
+              print(widget.user.phoneNumber);
+              Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => HomePage()),
+                  (Route<dynamic> route) => false);
+            } else {
+              print('retry');
+            }
+          }),
     );
   }
 
@@ -342,16 +344,16 @@ class _OnboardProfilePageState extends State<OnboardProfilePage> {
     var phoneNumber = user.phoneNumber.toString();
     phoneNumber = CustomFunctions().shortPhoneNumber(user.phoneNumber);
     print("ppppppppppppppppppppppppppppppp" + phoneNumber);
-   final now = DateTime.now();
-  String formatter = DateFormat('yMd').add_jm().format(now);
+    final now = DateTime.now();
+    String formatter = DateFormat('yMd').add_jm().format(now);
 
     Map<String, dynamic> userInfoMap = {
       "uid": user.uid,
-      "phoneNumberWithCountry": user.phoneNumber,
-      "phoneNumber": phoneNumber,
+      "phoneNumberWithoutCountry": phoneNumber,
+      "phoneNumber": user.phoneNumber,
       "status": '',
       "createdON": DateTime.now().millisecondsSinceEpoch,
-      "DateCreated" : formatter,
+      "DateCreated": formatter,
       "name": null,
       "profilePicture":
           "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
